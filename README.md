@@ -15,7 +15,8 @@ Flow of project:
 ToDo:
  * Add correalation analysis for dataset
  * Display correalation of dataset variables in client-side
+ *  update ReadMe file when there will be more free time
  
 Issues to fix:
  * Fix errors caused by faulty columns in the method singleLogit
-ReadMe file will be updated when there will be more free time
+
