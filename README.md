@@ -1,9 +1,9 @@
 # BankruptcyAPP
 
 Project consists of:
-  Client-side - ReactJS
-  Server-side for doing data analysis and Prediction models - Python
-  Server-side for database, to store created prediction model data- .Net
+  * Client-side - ReactJS
+  * Server-side for doing data analysis and Prediction models - Python
+  * Server-side for database, to store created prediction model data- .Net
   
 Flow of project:
   1. Create api to do bussiness logic with data, logistic reggresion model
