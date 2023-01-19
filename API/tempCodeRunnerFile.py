@@ -1,2 +1,1 @@
-y = ExcelGenerator()
-# print(y.generateExcel())
+'Access-Control-Allow-Origin', '*'

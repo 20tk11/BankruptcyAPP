@@ -19,7 +19,7 @@ export default function VariableSpecsRow({ variable }: Props) {
             <Table.Cell>{variable.kspvalue.toFixed(2)}</Table.Cell>
             <Table.Cell>{variable.Conc1}</Table.Cell>
             <Table.Cell>{variable.testStatistic.toFixed(2)}</Table.Cell>
-            {variable.missingPercent >= 0.05 ?
+            {variable.testPValue >= 0.05 ?
                 <Table.Cell negative>{variable.testPValue.toFixed(2)}</Table.Cell> :
                 <Table.Cell>{variable.testPValue.toFixed(2)}</Table.Cell>}
             <Table.Cell>{variable.significance}</Table.Cell>

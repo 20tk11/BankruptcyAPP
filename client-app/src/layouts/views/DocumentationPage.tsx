@@ -3,7 +3,7 @@ import { Link, NavLink } from "react-router-dom";
 import { Button, Container, Dropdown, Icon, Menu, Segment } from "semantic-ui-react";
 
 
-export default function HomePage() {
+export default function DocumentationPage() {
 
     return (
         <Container textAlign='justified'>

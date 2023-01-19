@@ -31,6 +31,11 @@ def Logit():
 
     y = ExcelGenerator()
     fileName = y.generateExcel(variables.variableSpec)
+    print("5")
+    print(type(variables.variableSpec))
+    print(type(fileName))
+    print({'data': variables.variableSpec, 'fileName': fileName})
+    print("6")
     return {'data': variables.variableSpec, 'fileName': fileName}
     # return send_file(fileName)
     # return variables.variableSpec

@@ -4,7 +4,7 @@ import { Button, Container, Dropdown, Icon, Menu, Segment } from "semantic-ui-re
 
 
 export default function NavBar() {
-    
+
     return (
         <Segment inverted>
             <Menu inverted secondary>
@@ -17,7 +17,7 @@ export default function NavBar() {
                     {/* <Menu.Item as={NavLink} to='/s' name='My Companies' /> */}
 
                     <Menu.Item position="right">
-
+                        <Menu.Item as={NavLink} to='/documentation' name='Documentation' />
                         <Dropdown item text='Display Options'>
                             <Dropdown.Menu>
                                 <Dropdown.Header>Text Size</Dropdown.Header>

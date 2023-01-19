@@ -7,6 +7,8 @@ from scipy.stats import kstest
 from scipy.stats import mannwhitneyu
 import statsmodels.api as sm
 
+from variables.variables import getColumns
+
 
 class Variables():
 
@@ -21,7 +23,6 @@ class Variables():
 
     def readJSON(self, file):
         self.variables = pd.read_json(file)
-
 
     def setDataframe(self, file, filesuffix):
         return self.readByFormat(file, filesuffix)
@@ -47,21 +48,19 @@ class Variables():
         return kstest(self.variables[column].dropna(), 'norm')
 
     def mannWhitneyUTest(self, column):
-        IsBankrupt_Not = self.variables[self.variables['Y'] == 0]
-        IsBankrupt_Yes = self.variables[self.variables['Y'] == 1]
+        IsBankrupt_Not = self.variables[self.variables['IsBankrupt'] == 0]
+        IsBankrupt_Yes = self.variables[self.variables['IsBankrupt'] == 1]
         return mannwhitneyu(
             x=IsBankrupt_Yes[column].dropna(), y=IsBankrupt_Not[column].dropna(), alternative='two-sided')
 
-    
     def singleLogit(self, column):
-        if ("Y" == column):
+        if ("IsBankrupt" == column):
             return 0, 0, 0, 0, 0, 0
         dftemp = self.variables.dropna(subset=[column])
         exog = sm.add_constant(dftemp[column])
-        endog = dftemp['Y']
+        endog = dftemp['IsBankrupt']
         model = sm.Logit(endog, exog, missing='drop').fit(
             method="bfgs", maxiter=100)
-        print(model.summary())
         constantPValue = model.pvalues[0]
         valuePValue = model.pvalues[1]
         constantStatistic = model.tvalues[0]
@@ -71,21 +70,22 @@ class Variables():
 
         return constantPValue, valuePValue, constantStatistic, valueStatistic, constant, value
 
-    #Filter columns that are not needed in the reggresion - fix problem with sm.Logit for getting string values
+    # Filter columns that are not needed in the reggresion - fix problem with sm.Logit for getting string values
     def analyzeVariables(self):
         self.variableSpec = []
-        for i in self.variables.columns:
+        variables = getColumns()
+        for i in np.intersect1d(variables, self.variables.columns):
             missingPercent = self.getMissingPercent(i)
             ksResult = self.kolmogorovSmirnovTest(i)
             mannWhitney = self.mannWhitneyUTest(i)
             modelConstPValue, modelValuePValue, modelConstStatistic, modelValueStatistic, constant, value = self.singleLogit(
                 i)
-            variableSpec = VariableSpecifications(
+
+            variableSpecs = VariableSpecifications(
                 i, missingPercent, ksResult[0], ksResult[1], mannWhitney[0], mannWhitney[1], value, constant,
                 modelValueStatistic, modelConstStatistic, modelValuePValue, modelConstPValue).getJson()
-            print(modelValuePValue)
-            print(type(modelValuePValue))
-            self.variableSpec.append(variableSpec)
+
+            self.variableSpec.append(variableSpecs)
 
     def getExcel(self):
         excelGen = ExcelGenerator()
@@ -97,25 +97,25 @@ class VariableSpecifications:
     def __init__(self, variableName, missingPercent, ksstatistic, kspvalue, testStatistic, testPValue,
                  singleValue, singleConstant, singleValueStatistic, singleConstantStatistic, singleValuePValue, singleConstantPValue):
         self.variableName = variableName
-        self.missingPercent = missingPercent
-        self.ksstatistic = ksstatistic
-        self.kspvalue = kspvalue
+        self.missingPercent = float(missingPercent)
+        self.ksstatistic = float(ksstatistic)
+        self.kspvalue = float(kspvalue)
         if (self.kspvalue < 0.05):
             self.ksResults = "Mann-Whitney U Test"
         else:
             self.ksResults = "T=Test"
-        self.testStatistic = testStatistic
-        self.testPValue = testPValue
+        self.testStatistic = float(testStatistic)
+        self.testPValue = float(testPValue)
         if (self.testPValue < 0.05):
             self.testResults = "Significant"
         else:
             self.testResults = "Non Significant"
-        self.singleValue = singleValue
-        self.singleConstant = singleConstant
-        self.singleValueStatistic = singleValueStatistic
-        self.singleConstantStatistic = singleConstantStatistic
-        self.singleValuePValue = singleValuePValue
-        self.singleConstantPValue = singleConstantPValue
+        self.singleValue = float(singleValue)
+        self.singleConstant = float(singleConstant)
+        self.singleValueStatistic = float(singleValueStatistic)
+        self.singleConstantStatistic = float(singleConstantStatistic)
+        self.singleValuePValue = float(singleValuePValue)
+        self.singleConstantPValue = float(singleConstantPValue)
 
     def getJson(self):
         return {"column": self.variableName, "missingPercent": self.missingPercent,
@@ -151,6 +151,7 @@ class Model:
 class ExcelGenerator:
     def generateExcel(self, data):
         table_start_pos = 2
+        print("1 line")
         fileNameWithoutPath = "user_id_" + datetime.now().strftime("%Y%m%d") + "_" + \
             datetime.now().strftime("%H%M%S%f") + "_VariableStats"
         fileName = "API//Results//" + fileNameWithoutPath + ".xlsx"
@@ -173,14 +174,17 @@ class ExcelGenerator:
                                        'font_color': 'white'})
         format2 = workbook.add_format({'bg_color':   'orange',
                                        'font_color': 'black'})
+        print("2 line")
         conditions = "B" + str(table_start_pos + 2) + \
             ":B" + str(table_start_pos + 1 + len(data))
         worksheet.conditional_format(conditions, options={
                                      'type': 'cell', 'criteria': 'greater than or equal to', 'value':  20, 'format':   format1})
         worksheet.conditional_format(conditions, options={
                                      'type': 'cell', 'criteria': 'between', 'minimum':  15, 'maximum':  20, 'format':   format2})
+        print("3 line")
         for i in range(len(data)):
             worksheet.write_row(row=table_start_pos + 1 + i, col=0,
                                 data=[data[i]["column"], data[i]["missingPercent"]])
+        print("4 line")
         workbook.close()
         return fileNameWithoutPath
