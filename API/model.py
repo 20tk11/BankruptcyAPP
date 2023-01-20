@@ -6,8 +6,9 @@ import xlsxwriter
 from scipy.stats import kstest
 from scipy.stats import mannwhitneyu
 import statsmodels.api as sm
-
+from sklearn.model_selection import train_test_split
 from variables.variables import getColumns
+from copy import deepcopy
 
 
 class Variables():
@@ -73,6 +74,7 @@ class Variables():
     # Filter columns that are not needed in the reggresion - fix problem with sm.Logit for getting string values
     def analyzeVariables(self):
         self.variableSpec = []
+        self.significantVariables = []
         variables = getColumns()
         for i in np.intersect1d(variables, self.variables.columns):
             missingPercent = self.getMissingPercent(i)
@@ -80,7 +82,8 @@ class Variables():
             mannWhitney = self.mannWhitneyUTest(i)
             modelConstPValue, modelValuePValue, modelConstStatistic, modelValueStatistic, constant, value = self.singleLogit(
                 i)
-
+            if (mannWhitney[1] < 0.05):
+                self.significantVariables.append(i)
             variableSpecs = VariableSpecifications(
                 i, missingPercent, ksResult[0], ksResult[1], mannWhitney[0], mannWhitney[1], value, constant,
                 modelValueStatistic, modelConstStatistic, modelValuePValue, modelConstPValue).getJson()
@@ -93,6 +96,12 @@ class Variables():
 
     def getVariableStats(self):
         return self.variableSpec
+
+    def getSignificant(self):
+        return self.significantVariables
+
+    def getVariables(self):
+        return self.variables
 
 
 class VariableSpecifications:
@@ -129,6 +138,14 @@ class VariableSpecifications:
 
 
 class Model:
+    added_columns = []
+    tests = pd.DataFrame(columns=['LLR', 'prsquared', 'aic', 'bic', 'p-value'])
+    max_LR = None
+    modellist = []
+    modelLog = pd.DataFrame(columns=['LLR', 'prsquared', 'aic', 'bic'])
+    Best_model = None
+    columnLog = []
+
     def __init__(self):
         self.variables = Variables()
 
@@ -141,11 +158,69 @@ class Model:
     def getVariableStats(self):
         return self.variables.getVariableStats()
 
+    def setDataSplits(self):
+        self.train, self.test = train_test_split(
+            self.variables.getVariables(), test_size=0.2, random_state=42, stratify=self.variables.getVariables()['IsBankrupt'])
+
     def getModel(self):
-        self.setFileName("Data//dataset1.csv")
-        self.setVariables()
-        self.analyzeModelVariables()
-        return self.variables.getVariableStats()
+        self.setDataSplits()
+        Best_column = None
+
+        counter = 0
+
+        for i in range(1):
+            Best_column = None
+            for column in self.variables.getSignificant():
+                endog = self.train['IsBankrupt']
+                if len(self.added_columns) == 0:
+                    exog = sm.add_constant(self.train[column])
+                else:
+                    exog = sm.add_constant(
+                        self.train[self.added_columns + [column]])
+                self.model = sm.Logit(endog, exog, missing='drop').fit(
+                    method="bfgs")
+                print(self.model.summary())
+                self.tests.loc[column] = [
+                    self.model.llr, self.model.prsquared, self.model.bic, self.model.aic, self.model.pvalues[-1]]
+                if self.max_LR == None:
+                    self.max_LR = self.model.llr
+                    Best_column = column
+                    self.Best_model = self.model
+                elif self.model.pvalues[-1] < 0.05:
+                    if self.max_LR < self.model.llr:
+                        self.max_LR = self.model.llr
+                        Best_column = column
+                        self.Best_model = self.model
+            if (Best_column == None):
+                break
+            self.added_columns.append(Best_column)
+            self.columnLog.append(deepcopy(self.added_columns))
+            self.modelLog.loc[counter] = [
+                self.Best_model.llr, self.Best_model.prsquared, self.Best_model.bic, self.Best_model.aic]
+            counter = counter + 1
+            self.modellist.append(self.Best_model)
+
+    def compareLR(self, column):
+        if self.max_LR == None:
+            self.max_LR = self.model.llr
+            Best_column = column
+            self.Best_model = self.model
+        elif self.model.pvalues[-1] < 0.05:
+            if self.max_LR < self.model.llr:
+                self.max_LR = self.model.llr
+                Best_column = column
+                self.Best_model = self.model
+        return Best_column
+
+    def displayHistory(self):
+        print(self.Best_model.summary())
+        print("---ModelList---")
+        for i in self.columnLog:
+            print("---Column Log---")
+            print(i)
+        print("---Test Log---")
+        self.tests = self.tests.sort_values(by=['LLR'], ascending=False)
+        print(self.tests)
 
 
 class ExcelGenerator:

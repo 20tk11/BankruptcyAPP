@@ -26,6 +26,8 @@ def Logit():
     model.readFile(file)
     model.analyzeModelVariables()
     variablesSpec = model.getVariableStats()
+    model.getModel()
+    model.displayHistory()
     return {'data': variablesSpec, 'fileName': file.filename}
 
 
