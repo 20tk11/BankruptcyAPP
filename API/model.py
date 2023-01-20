@@ -91,6 +91,9 @@ class Variables():
         excelGen = ExcelGenerator()
         return excelGen.generateExcel(self.variableSpec)
 
+    def getVariableStats(self):
+        return self.variableSpec
+
 
 class VariableSpecifications:
 
@@ -129,17 +132,14 @@ class Model:
     def __init__(self):
         self.variables = Variables()
 
-    def setFileName(self, fileName):
-        self.fileName = fileName
-
-    def setVariables(self):
-        self.variables.setDataframe(self.fileName)
+    def readFile(self, file):
+        self.variables.setDataframe(file, file.filename.rsplit('.', 1)[-1])
 
     def analyzeModelVariables(self):
-        self.variables.columnMisingPercent()
+        self.variables.analyzeVariables()
 
     def getVariableStats(self):
-        return self.variables
+        return self.variables.getVariableStats()
 
     def getModel(self):
         self.setFileName("Data//dataset1.csv")

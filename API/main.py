@@ -2,7 +2,7 @@ import json
 from flask import Flask, Response, request, send_file
 from flask_cors import CORS
 import pandas as pd
-from model import Variables, ExcelGenerator
+from model import Model, Variables, ExcelGenerator
 
 app = Flask(__name__)
 CORS(app)
@@ -22,23 +22,11 @@ def after_request(response):
 def Logit():
     file = request.files['file']
     print(file)
-    variables = Variables()
-    if variables.setDataframe(file, file.filename.rsplit('.', 1)[1]) == False:
-        return Response(json.dumps({'Error': 'Cannot read file of type: ' + file.filename.rsplit('.', 1)[1]}),
-                        status=400,
-                        mimetype="application/json")
-    variables.analyzeVariables()
-
-    y = ExcelGenerator()
-    fileName = y.generateExcel(variables.variableSpec)
-    print("5")
-    print(type(variables.variableSpec))
-    print(type(fileName))
-    print({'data': variables.variableSpec, 'fileName': fileName})
-    print("6")
-    return {'data': variables.variableSpec, 'fileName': fileName}
-    # return send_file(fileName)
-    # return variables.variableSpec
+    model = Model()
+    model.readFile(file)
+    model.analyzeModelVariables()
+    variablesSpec = model.getVariableStats()
+    return {'data': variablesSpec, 'fileName': file.filename}
 
 
 @app.route('/file/<file>', methods=['GET'])
