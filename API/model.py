@@ -1,3 +1,4 @@
+import math
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -7,8 +8,12 @@ from scipy.stats import kstest
 from scipy.stats import mannwhitneyu
 import statsmodels.api as sm
 from sklearn.model_selection import train_test_split
-from variables.variables import getColumns
+from variables.variables import getColumns, getColumnsByType
 from copy import deepcopy
+import sys
+import numpy
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+sys.float_info.epsilon
 
 
 class Variables():
@@ -72,10 +77,10 @@ class Variables():
         return constantPValue, valuePValue, constantStatistic, valueStatistic, constant, value
 
     # Filter columns that are not needed in the reggresion - fix problem with sm.Logit for getting string values
-    def analyzeVariables(self):
+    def analyzeVariables(self, type):
         self.variableSpec = []
         self.significantVariables = []
-        variables = getColumns()
+        variables = getColumnsByType(type, "A")
         for i in np.intersect1d(variables, self.variables.columns):
             missingPercent = self.getMissingPercent(i)
             ksResult = self.kolmogorovSmirnovTest(i)
@@ -138,13 +143,6 @@ class VariableSpecifications:
 
 
 class Model:
-    added_columns = []
-    tests = pd.DataFrame(columns=['LLR', 'prsquared', 'aic', 'bic', 'p-value'])
-    max_LR = None
-    modellist = []
-    modelLog = pd.DataFrame(columns=['LLR', 'prsquared', 'aic', 'bic'])
-    Best_model = None
-    columnLog = []
 
     def __init__(self):
         self.variables = Variables()
@@ -152,8 +150,8 @@ class Model:
     def readFile(self, file):
         self.variables.setDataframe(file, file.filename.rsplit('.', 1)[-1])
 
-    def analyzeModelVariables(self):
-        self.variables.analyzeVariables()
+    def analyzeModelVariables(self, type):
+        self.variables.analyzeVariables(type)
 
     def getVariableStats(self):
         return self.variables.getVariableStats()
@@ -163,34 +161,42 @@ class Model:
             self.variables.getVariables(), test_size=0.2, random_state=42, stratify=self.variables.getVariables()['IsBankrupt'])
 
     def getModel(self):
+        self.added_columns = []
+        self.tests = pd.DataFrame(
+            columns=['LLR', 'prsquared', 'aic', 'bic', 'p-value'])
+        self.max_LR = None
+        self.modellist = []
+        self.modelLog = pd.DataFrame(
+            columns=['LLR', 'prsquared', 'aic', 'bic'])
+        self.Best_model = None
+        self.columnLog = []
         self.setDataSplits()
-        Best_column = None
-
         counter = 0
-
-        for i in range(1):
+        print(self.variables.getSignificant())
+        for i in range(11):
             Best_column = None
             for column in self.variables.getSignificant():
-                endog = self.train['IsBankrupt']
-                if len(self.added_columns) == 0:
-                    exog = sm.add_constant(self.train[column])
-                else:
-                    exog = sm.add_constant(
-                        self.train[self.added_columns + [column]])
-                self.model = sm.Logit(endog, exog, missing='drop').fit(
-                    method="bfgs")
-                print(self.model.summary())
-                self.tests.loc[column] = [
-                    self.model.llr, self.model.prsquared, self.model.bic, self.model.aic, self.model.pvalues[-1]]
-                if self.max_LR == None:
-                    self.max_LR = self.model.llr
-                    Best_column = column
-                    self.Best_model = self.model
-                elif self.model.pvalues[-1] < 0.05:
-                    if self.max_LR < self.model.llr:
+                if column not in self.added_columns:
+                    endog = self.train['IsBankrupt']
+                    if len(self.added_columns) == 0:
+                        exog = sm.add_constant(self.train[column])
+                    else:
+                        exog = sm.add_constant(
+                            self.train[self.added_columns + [column]])
+                    self.model = sm.Logit(endog, exog, missing='drop').fit(
+                        method="bfgs")
+                    print(self.model.summary())
+                    self.tests.loc[column] = [
+                        self.model.llr, self.model.prsquared, self.model.bic, self.model.aic, self.model.pvalues[-1]]
+                    if self.max_LR == None:
                         self.max_LR = self.model.llr
                         Best_column = column
                         self.Best_model = self.model
+                    elif self.model.pvalues[-1] < 0.05:
+                        if self.max_LR < self.model.llr:
+                            self.max_LR = self.model.llr
+                            Best_column = column
+                            self.Best_model = self.model
             if (Best_column == None):
                 break
             self.added_columns.append(Best_column)
@@ -199,6 +205,85 @@ class Model:
                 self.Best_model.llr, self.Best_model.prsquared, self.Best_model.bic, self.Best_model.aic]
             counter = counter + 1
             self.modellist.append(self.Best_model)
+            print(self.Best_model.summary())
+            for j in range(1, len(self.Best_model.pvalues)):
+                if (self.Best_model.pvalues[j] >= 0.05):
+                    print(self.Best_model.pvalues[j])
+                    print(self.Best_model.pvalues.index[j])
+                    self.added_columns.remove(self.Best_model.pvalues.index[j])
+                    endog = self.train['IsBankrupt']
+                    exog = sm.add_constant(
+                        self.train[self.added_columns])
+                    self.model = sm.Logit(endog, exog, missing='drop').fit(
+                        method="bfgs")
+                    self.Best_model = self.model
+                    self.columnLog.append(deepcopy(self.added_columns))
+                    self.modelLog.loc[counter] = [
+                        self.Best_model.llr, self.Best_model.prsquared, self.Best_model.bic, self.Best_model.aic]
+                    counter = counter + 1
+                    self.modellist.append(self.Best_model)
+                    break
+        print(self.Best_model.summary())
+
+    def formSignificantVariables(self):
+        significantVariables = []
+        for i in range(len(self.Best_model.pvalues)):
+            significantVariables.append({"variable": self.Best_model.pvalues.index[i],
+                                         "significance": self.Best_model.pvalues[i], "coefficient": self.Best_model.params[i]})
+        return significantVariables
+
+    def formConfusionMatrix(self, data):
+        significantCoef = pd.DataFrame()
+        significantCoef['IsBankrupt'] = data['IsBankrupt']
+        significantCoef[self.added_columns] = data[self.added_columns]
+        result = self.Best_model.predict(significantCoef)
+        result.loc[result >= 0.5] = 1
+        result.loc[result < 0.5] = 0
+        classification_data = pd.DataFrame()
+        classification_data['true'] = data['IsBankrupt']
+        classification_data['pred'] = result
+        classification_data = classification_data.dropna()
+        classification_data = classification_data.astype(int)
+        confusion_matrix(
+            classification_data['true'], classification_data['pred'])
+        Tnonbancruptcy = confusion_matrix(classification_data['true'], classification_data['pred'])[
+            0][0] / len(classification_data.loc[classification_data['true'] == 0]) * 100
+        Tbancruptcy = confusion_matrix(classification_data['true'], classification_data['pred'])[
+            1][1] / len(classification_data.loc[classification_data['true'] == 1]) * 100
+        Tboth = (confusion_matrix(classification_data['true'], classification_data['pred'])[
+            1][1] + confusion_matrix(classification_data['true'], classification_data['pred'])[0][0]) / len(classification_data) * 100
+        return {"nonBankruptTrue": Tnonbancruptcy, "bankruptTrue": Tbancruptcy, "avgAcc": Tboth}
+
+    def getCoxSnell(self):
+        coxSnell = 1 - math.exp((self.Best_model.llnull -
+                             self.Best_model.llf)*(2/self.Best_model.nobs))
+        return coxSnell
+
+    def getNegelkerke(self, CS):
+        RsqNE = CS / \
+            (1-math.exp((2*self.Best_model.llnull)/self.Best_model.nobs))
+        return RsqNE
+
+    def getMcFadden(self):
+        return self.Best_model.prsquared
+
+    def getChiSquare(self):
+        return self.Best_model.llr_pvalue
+
+    def getResult(self):
+        variables = self.formSignificantVariables()
+
+        confusionMatrixTrainData = self.formConfusionMatrix(self.train)
+        confusionMatrixTestData = self.formConfusionMatrix(self.test)
+
+        CS = self.getCoxSnell()
+        Negel = self.getNegelkerke(CS)
+        MF = self.getMcFadden()
+        ChiSq = self.getChiSquare()
+
+        return {"variables": variables, "trainPred": confusionMatrixTrainData, 
+            "testPred": confusionMatrixTestData, "coxSnell": CS, "negelkerke": Negel,
+            "macFadden": MF, "chiSquare": ChiSq}
 
     def compareLR(self, column):
         if self.max_LR == None:
@@ -213,10 +298,11 @@ class Model:
         return Best_column
 
     def displayHistory(self):
-        print(self.Best_model.summary())
         print("---ModelList---")
+        print(self.modelLog)
+        print("---Column Log---")
         for i in self.columnLog:
-            print("---Column Log---")
+
             print(i)
         print("---Test Log---")
         self.tests = self.tests.sort_values(by=['LLR'], ascending=False)

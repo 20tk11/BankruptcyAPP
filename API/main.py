@@ -21,14 +21,17 @@ def after_request(response):
 @app.route("/logit", methods=['POST'])
 def Logit():
     file = request.files['file']
+    type = request.form.get('type')
+    print(type)
     print(file)
     model = Model()
     model.readFile(file)
-    model.analyzeModelVariables()
+    model.analyzeModelVariables(type)
     variablesSpec = model.getVariableStats()
     model.getModel()
     model.displayHistory()
-    return {'data': variablesSpec, 'fileName': file.filename}
+
+    return {'data': variablesSpec, 'fileName': file.filename, "result": model.getResult()}
 
 
 @app.route('/file/<file>', methods=['GET'])

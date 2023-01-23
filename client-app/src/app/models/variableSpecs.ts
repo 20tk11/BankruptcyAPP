@@ -15,7 +15,27 @@ export interface VariableSpecifications {
     singleConstantPValue: number;
 }
 
+export interface Result {
+    chiSquare: number;
+    coxSnell: number;
+    macFadden: number;
+    negelkerke: number;
+    testPred: Confusion;
+    trainPred: Confusion;
+    variables: Array<SignificatVariables>;
+}
+export interface Confusion {
+    avgAcc: number;
+    bankruptTrue: number;
+    nonBankruptTrue: number;
+}
 export interface VariablesSpecs {
     data: Array<VariableSpecifications>
     fileName: string
+    result: Result;
+}
+export interface SignificatVariables {
+    coefficient: number;
+    significance: number;
+    variable: string;
 }

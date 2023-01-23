@@ -7,7 +7,7 @@ const sleep = (delay: number) => {
     })
 }
 
-axios.defaults.baseURL = 'http://192.168.8.177:5000';
+axios.defaults.baseURL = 'http://192.168.8.180:5000';
 
 axios.interceptors.response.use(async response => {
     try {

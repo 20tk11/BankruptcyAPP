@@ -23,10 +23,12 @@ export default class ModelStore {
         return this.generatedFile;
     }
 
-    loadVariablesSpecs = async () => {
+    loadVariablesSpecs = async (type: string) => {
+        console.log(type)
         const formData = new FormData();
         if (this.selectedFile) {
             formData.append("file", this.selectedFile);
+            formData.append("type", type);
         }
         this.setLoadingInitial(true);
         try {
@@ -34,6 +36,7 @@ export default class ModelStore {
                 this.variableRegistry.clear();
             }
             const variables = await agent.VariableSpecs.specs(formData)
+            console.log(variables);
             this.setGeneratedFileName(variables.fileName)
             variables.data.forEach(element => {
                 this.setVariable(element.column, element)

@@ -17,9 +17,9 @@ const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sh
 export default observer(function CreateModel() {
 
     const { modelStore } = useStore();
-    const { generatedFile, generatedFileName, loadFile, loadVariablesSpecs, variables, setSelectedFile, selectedFile, setFileIsSelected } = modelStore;
+    const { generatedFile, generatedFileName, loadFile, loadVariablesSpecs, variables, setSelectedFile, selectedFile, setFileIsSelected, isFilePicked } = modelStore;
     const [activeState, setActive] = useState("variables");
-
+    const [checkboxState, setcheckboxState] = useState<string>("type1");
 
     const fileReader = new FileReader();
 
@@ -29,6 +29,10 @@ export default observer(function CreateModel() {
     };
 
     const handleItemClick = (e: any, { name }: any) => setActive(name)
+    const handleCheckBoxChange = (e: any, { value }: any) => {
+        console.log(value)
+        setcheckboxState(value)
+    }
     function handleExport() {
         saveAs("http://192.168.8.177:5000/file/" + generatedFileName, generatedFileName + ".xlsx")
     }
@@ -51,7 +55,7 @@ export default observer(function CreateModel() {
         if (selectedFile) {
             fileReader.onload = function (event) {
                 if (event.target) {
-                    loadVariablesSpecs();
+                    loadVariablesSpecs(checkboxState);
                     // variables.map(variable => (
                     //     console.log(variable.column)
                     // ))
@@ -61,31 +65,54 @@ export default observer(function CreateModel() {
         }
     };
     return (
-        <Container textAlign='justified'>
-            <div>
-                <label className="ui icon button">
-                    <i className="file icon"></i>
+        <Container textAlign='justified' >
 
-                    <input type="file" id="csvFileInput" onChange={handleOnChange} hidden />
-                </label>
-
-            </div>
             <Form >
 
+                <Form>
+                    <Form.Group inline>
+                        <div className="inlineForm">
+                            <label className="ui icon button">
+                                <i className="file icon"></i>
+                                fILE
+                                <input type="file" id="csvFileInput" onChange={handleOnChange} hidden />
+                            </label>
 
-                <button
-                    onClick={(e) => {
-                        handleOnSubmit(e);
-                    }}
-                >
-                    IMPORT CSV
-                </button>
-                <button
-                    onClick={handleExport}
+                        </div>
+                        <label>Data types</label>
+                        <Form.Radio
+                            label='Type 1'
+                            value='type1'
+                            checked={checkboxState === 'type1'}
+                            onChange={handleCheckBoxChange}
+                        />
+                        <Form.Radio
+                            label='Type 2'
+                            value='type2'
+                            checked={checkboxState === 'type2'}
+                            onChange={handleCheckBoxChange}
+                        />
+                        <Form.Radio
+                            label='Type 3'
+                            value='type3'
+                            checked={checkboxState === 'type3'}
+                            onChange={handleCheckBoxChange}
+                        />
+                        <Form.Radio
+                            label='Type 4'
+                            value='type4'
+                            checked={checkboxState === 'type4'}
+                            onChange={handleCheckBoxChange}
+                        />
+                    </Form.Group>
+                    <Button
+                        onClick={handleOnSubmit}
+                        disabled={!isFilePicked}
+                    >
+                        IMPORT CSV
+                    </Button>
+                </Form>
 
-                >
-                    IMPORT CSV
-                </button>
             </Form>
             <Menu tabular>
                 <Menu.Item
