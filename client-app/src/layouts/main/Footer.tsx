@@ -15,7 +15,7 @@ import {
 
 
 export default function Footer() {
-    
+
 
     return (
         <Segment inverted vertical style={{ padding: '2em 0em' }}>

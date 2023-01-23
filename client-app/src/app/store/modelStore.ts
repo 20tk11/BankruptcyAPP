@@ -1,6 +1,6 @@
 import { makeAutoObservable } from "mobx";
 import agent from "../api/agent";
-import { VariableSpecifications } from "../models/variableSpecs";
+import { Result, VariableSpecifications } from "../models/variableSpecs";
 
 export default class ModelStore {
     variableRegistry = new Map<string, VariableSpecifications>();
@@ -10,6 +10,7 @@ export default class ModelStore {
     isFilePicked = false
     generatedFileName = null
     generatedFile = null
+    modelResult: Result | null = null;
 
     constructor() {
         makeAutoObservable(this)
@@ -36,7 +37,9 @@ export default class ModelStore {
                 this.variableRegistry.clear();
             }
             const variables = await agent.VariableSpecs.specs(formData)
-            console.log(variables);
+
+            this.setModelResult(variables.result)
+            console.log(this.modelResult);
             this.setGeneratedFileName(variables.fileName)
             variables.data.forEach(element => {
                 this.setVariable(element.column, element)
@@ -80,5 +83,8 @@ export default class ModelStore {
     }
     setGeneratedFile = (file: any) => {
         this.generatedFile = file;
+    }
+    setModelResult = (result: Result) => {
+        this.modelResult = result;
     }
 }

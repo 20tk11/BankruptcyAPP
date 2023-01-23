@@ -22,7 +22,7 @@ export interface Result {
     negelkerke: number;
     testPred: Confusion;
     trainPred: Confusion;
-    variables: Array<SignificatVariables>;
+    variables: VariablesByRatioTypes;
 }
 export interface Confusion {
     avgAcc: number;
@@ -38,4 +38,14 @@ export interface SignificatVariables {
     coefficient: number;
     significance: number;
     variable: string;
+}
+
+export interface VariablesByRatioTypes {
+    activity: Array<SignificatVariables>;
+    financial: Array<SignificatVariables>;
+    liquidity: Array<SignificatVariables>;
+    other: Array<SignificatVariables>;
+    solvency: Array<SignificatVariables>;
+    structure: Array<SignificatVariables>;
+    const: SignificatVariables;
 }

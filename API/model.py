@@ -8,7 +8,7 @@ from scipy.stats import kstest
 from scipy.stats import mannwhitneyu
 import statsmodels.api as sm
 from sklearn.model_selection import train_test_split
-from variables.variables import getColumns, getColumnsByType
+from variables.variables import getColumns, getColumnsByType, findRatioGroup
 from copy import deepcopy
 import sys
 import numpy
@@ -226,11 +226,7 @@ class Model:
         print(self.Best_model.summary())
 
     def formSignificantVariables(self):
-        significantVariables = []
-        for i in range(len(self.Best_model.pvalues)):
-            significantVariables.append({"variable": self.Best_model.pvalues.index[i],
-                                         "significance": self.Best_model.pvalues[i], "coefficient": self.Best_model.params[i]})
-        return significantVariables
+        return findRatioGroup(self.Best_model)
 
     def formConfusionMatrix(self, data):
         significantCoef = pd.DataFrame()
@@ -256,7 +252,7 @@ class Model:
 
     def getCoxSnell(self):
         coxSnell = 1 - math.exp((self.Best_model.llnull -
-                             self.Best_model.llf)*(2/self.Best_model.nobs))
+                                 self.Best_model.llf)*(2/self.Best_model.nobs))
         return coxSnell
 
     def getNegelkerke(self, CS):
@@ -281,9 +277,9 @@ class Model:
         MF = self.getMcFadden()
         ChiSq = self.getChiSquare()
 
-        return {"variables": variables, "trainPred": confusionMatrixTrainData, 
-            "testPred": confusionMatrixTestData, "coxSnell": CS, "negelkerke": Negel,
-            "macFadden": MF, "chiSquare": ChiSq}
+        return {"variables": variables, "trainPred": confusionMatrixTrainData,
+                "testPred": confusionMatrixTestData, "coxSnell": CS, "negelkerke": Negel,
+                "macFadden": MF, "chiSquare": ChiSq}
 
     def compareLR(self, column):
         if self.max_LR == None:

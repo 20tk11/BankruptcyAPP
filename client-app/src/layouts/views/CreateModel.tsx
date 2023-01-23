@@ -11,6 +11,7 @@ import { toJS } from "mobx";
 import VariablesSpecsTable from "./variables/variablesSpecsTable";
 import saveAs from "file-saver";
 import { act } from "@testing-library/react";
+import ModelView from "./model/modelView";
 
 const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
@@ -64,6 +65,17 @@ export default observer(function CreateModel() {
             fileReader.readAsText(selectedFile)
         }
     };
+    function TableSwitch() {
+        if (variables.length > 0) {
+            if (activeState === 'variables') {
+                return <VariablesSpecsTable />;
+            }
+            else if (activeState === 'model') {
+                return <ModelView />;
+            }
+        }
+        return <div />;
+    }
     return (
         <Container textAlign='justified' >
 
@@ -125,8 +137,13 @@ export default observer(function CreateModel() {
                     active={activeState === 'correlation'}
                     onClick={handleItemClick}
                 />
+                <Menu.Item
+                    name='model'
+                    active={activeState === 'model'}
+                    onClick={handleItemClick}
+                />
             </Menu>
-            {variables.length > 0 ? (activeState === 'variables' ? <VariablesSpecsTable /> : <div />) : <div />}
+            <TableSwitch />
 
         </Container>
     )
