@@ -36,8 +36,27 @@ export default function ModelView() {
                     <RatioHeader variable={"Other Ratios"} />
                     <ModelTable variable={modelResult?.variables.other} />
                 </Table.Body>
+            </Table>
+            <Table stackable>
 
+                <Table.Body>
+                    <RatioHeader variable={"Economic Ratios"} />
+                    <ModelTable variable={modelResult?.variables.economic} />
+                </Table.Body>
+            </Table>
+            <Table stackable>
 
+                <Table.Body>
+                    <RatioHeader variable={"Sector Ratios"} />
+                    <ModelTable variable={modelResult?.variables.industry} />
+                </Table.Body>
+            </Table>
+            <Table stackable>
+
+                <Table.Body>
+                    <RatioHeader variable={"Sector Ratios"} />
+                    <ModelTable variable={modelResult?.variables.nonfinancial} />
+                </Table.Body>
             </Table>
             <Divider horizontal />
             <Table stackable>

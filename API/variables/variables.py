@@ -47,6 +47,9 @@ def findRatioGroup(Best_model):
     activity = []
     structure = []
     other = []
+    economic = []
+    industry = []
+    nonfinancial = []
     for i in range(len(Best_model.pvalues)):
         variable = {"variable": Best_model.pvalues.index[i],
                     "significance": Best_model.pvalues[i], "coefficient": Best_model.params[i]}
@@ -62,11 +65,17 @@ def findRatioGroup(Best_model):
             structure.append(variable)
         elif (Best_model.pvalues.index[i] in otherRatios):
             other.append(variable)
+        elif (Best_model.pvalues.index[i] in economicColumns):
+            economic.append(variable)
+        elif (Best_model.pvalues.index[i] in industryBranchColumns):
+            industry.append(variable)
+        elif (Best_model.pvalues.index[i] in nonfinancialColumns):
+            nonfinancial.append(variable)
         else:
             const = {"variable": Best_model.pvalues.index[i],
                      "significance": Best_model.pvalues[i], "coefficient": Best_model.params[i]}
 
-    return {"financial": financial, "liquidity": liquidity, "solvency": solvency, "activity": activity, "structure": structure, "other": other, "const": const}
+    return {"financial": financial, "liquidity": liquidity, "solvency": solvency, "activity": activity, "structure": structure, "other": other, "const": const, "economic": economic, "industry": industry, "nonfinancial": nonfinancial}
 
 
 def getColumns():

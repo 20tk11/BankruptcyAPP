@@ -10,7 +10,7 @@ export default function RatioHeader({ variable }: Props) {
 
         <>
             <Table.Row>
-                <Table.Cell colSpan='2'><b>{variable}</b></Table.Cell>
+                <Table.Cell textAlign="center" colSpan='2'><b>{variable}</b></Table.Cell>
 
             </Table.Row>
         </>

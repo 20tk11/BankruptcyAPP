@@ -48,4 +48,7 @@ export interface VariablesByRatioTypes {
     solvency: Array<SignificatVariables>;
     structure: Array<SignificatVariables>;
     const: SignificatVariables;
+    economic: Array<SignificatVariables>;
+    industry: Array<SignificatVariables>;
+    nonfinancial: Array<SignificatVariables>;
 }

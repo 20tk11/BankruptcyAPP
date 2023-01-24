@@ -33,7 +33,7 @@ def Logit():
 
     return {'data': variablesSpec, 'fileName': file.filename, "result": model.getResult()}
 
-
+# PAKEISTI PILNAI -> paduo
 @app.route('/file/<file>', methods=['GET'])
 def File(file):
     print(file)

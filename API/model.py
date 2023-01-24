@@ -46,6 +46,10 @@ class Variables():
         else:
             return False
 
+    def changeValues(self):
+        self.variables['Audit'] = self.variables['Audit'].replace(['T', 'N'], [1, 0])
+        self.variables['SingleShareholder'] = self.variables['SingleShareholder'].replace(['T', 'N'], [1, 0])
+
     def getMissingPercent(self, column):
         return self.variables[column].isna().sum() * 100 / len(self.variables)
 
@@ -78,6 +82,7 @@ class Variables():
 
     # Filter columns that are not needed in the reggresion - fix problem with sm.Logit for getting string values
     def analyzeVariables(self, type):
+        self.changeValues()
         self.variableSpec = []
         self.significantVariables = []
         variables = getColumnsByType(type, "A")
@@ -173,7 +178,7 @@ class Model:
         self.setDataSplits()
         counter = 0
         print(self.variables.getSignificant())
-        for i in range(11):
+        for i in range(8):
             Best_column = None
             for column in self.variables.getSignificant():
                 if column not in self.added_columns:
