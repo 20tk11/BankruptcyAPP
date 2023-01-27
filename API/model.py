@@ -8,7 +8,7 @@ from scipy.stats import kstest
 from scipy.stats import mannwhitneyu
 import statsmodels.api as sm
 from sklearn.model_selection import train_test_split
-from variables.variables import getColumns, getColumnsByType, findRatioGroup
+from variables.variables import getColumns, getColumnsByType, findRatioGroup, getFinancialColumns, getActivityColumns, getBranchColumns, getEconomicColumns, getLiquidityColumns, getNonFinancialColumns, getOtherColumns, getSolvencyColumns, getStructureColumns
 from copy import deepcopy
 import sys
 import numpy
@@ -47,8 +47,10 @@ class Variables():
             return False
 
     def changeValues(self):
-        self.variables['Audit'] = self.variables['Audit'].replace(['T', 'N'], [1, 0])
-        self.variables['SingleShareholder'] = self.variables['SingleShareholder'].replace(['T', 'N'], [1, 0])
+        self.variables['Audit'] = self.variables['Audit'].replace(['T', 'N'], [
+                                                                  1, 0])
+        self.variables['SingleShareholder'] = self.variables['SingleShareholder'].replace([
+                                                                                          'T', 'N'], [1, 0])
 
     def getMissingPercent(self, column):
         return self.variables[column].isna().sum() * 100 / len(self.variables)
@@ -86,13 +88,13 @@ class Variables():
         self.variableSpec = []
         self.significantVariables = []
         variables = getColumnsByType(type, "A")
-        for i in np.intersect1d(variables, self.variables.columns):
+        for i in np.intersect1d(self.variables.columns, getColumns()):
             missingPercent = self.getMissingPercent(i)
             ksResult = self.kolmogorovSmirnovTest(i)
             mannWhitney = self.mannWhitneyUTest(i)
             modelConstPValue, modelValuePValue, modelConstStatistic, modelValueStatistic, constant, value = self.singleLogit(
                 i)
-            if (mannWhitney[1] < 0.05):
+            if (mannWhitney[1] < 0.05 and i in variables):
                 self.significantVariables.append(i)
             variableSpecs = VariableSpecifications(
                 i, missingPercent, ksResult[0], ksResult[1], mannWhitney[0], mannWhitney[1], value, constant,
@@ -113,6 +115,54 @@ class Variables():
     def getVariables(self):
         return self.variables
 
+    def getCorrelation(self):
+        self.correlationRestrictions = []
+        financial = self.getCorrelationByRatioType(
+            getFinancialColumns())
+        liquidity = self.getCorrelationByRatioType(
+            getLiquidityColumns())
+        solvency = self.getCorrelationByRatioType(
+            getSolvencyColumns())
+        activity = self.getCorrelationByRatioType(
+            getActivityColumns())
+        structure = self.getCorrelationByRatioType(
+            getStructureColumns())
+        other = self.getCorrelationByRatioType(getOtherColumns())
+        nonfinancial = self.getCorrelationByRatioType(
+            getNonFinancialColumns())
+        economic = self.getCorrelationByRatioType(
+            getEconomicColumns())
+        industry = self.getCorrelationByRatioType(getBranchColumns())
+        return {"financial": financial, "liquidity": liquidity, "solvency": solvency,
+                "activity": activity, "structure": structure, "other": other, "nonfinancial": nonfinancial,
+                "economic": economic, "industry": industry}
+
+    def getCorrelationByRatioType(self, columns):
+        correlation = pd.DataFrame()
+        for i in np.intersect1d(columns, self.variables.columns):
+            correlation[i] = self.variables[i]
+        correlation = correlation.dropna()
+        corr_matrix = correlation.corr()
+        corr_result = self.getCorrForObject(corr_matrix)
+        print(corr_result)
+        return corr_result
+
+    def getCorrForObject(self, corr_matrix):
+        columnCorrelation = []
+        for i in range(len(corr_matrix.values)):
+            cor = {"column": corr_matrix.columns[i],
+                   "correlations": corr_matrix.values[i].tolist()}
+            columnCorrelation.append(cor)
+            corrRe = []
+            for j in range(len(corr_matrix.values[i].tolist())):
+                if corr_matrix.values[i][j] >= 0.7 or corr_matrix.values[i][j] <= -0.7:
+                    corrRe.append(corr_matrix.columns[j])
+            corrRestrictionColumn = {corr_matrix.columns[i]:corrRe }
+            self.correlationRestrictions.append(corrRestrictionColumn)
+        return columnCorrelation
+
+    def getCorrelationRestrictions(self):
+        return self.correlationRestrictions
 
 class VariableSpecifications:
 
@@ -284,7 +334,7 @@ class Model:
 
         return {"variables": variables, "trainPred": confusionMatrixTrainData,
                 "testPred": confusionMatrixTestData, "coxSnell": CS, "negelkerke": Negel,
-                "macFadden": MF, "chiSquare": ChiSq}
+                "macFadden": MF, "chiSquare": ChiSq, "numObs": self.Best_model.nobs}
 
     def compareLR(self, column):
         if self.max_LR == None:
@@ -308,6 +358,12 @@ class Model:
         print("---Test Log---")
         self.tests = self.tests.sort_values(by=['LLR'], ascending=False)
         print(self.tests)
+
+    def getCorrelation(self):
+        return self.variables.getCorrelation()
+
+    def getCorrelationRestrictions(self):
+        return self.variables.getCorrelationRestrictions()
 
 
 class ExcelGenerator:

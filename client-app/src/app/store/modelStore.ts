@@ -37,7 +37,7 @@ export default class ModelStore {
                 this.variableRegistry.clear();
             }
             const variables = await agent.VariableSpecs.specs(formData)
-
+            console.log(variables)
             this.setModelResult(variables.result)
             console.log(this.modelResult);
             this.setGeneratedFileName(variables.fileName)

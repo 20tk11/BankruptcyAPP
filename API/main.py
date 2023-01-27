@@ -27,13 +27,16 @@ def Logit():
     model = Model()
     model.readFile(file)
     model.analyzeModelVariables(type)
+    correalation = model.getCorrelation()
     variablesSpec = model.getVariableStats()
     model.getModel()
     model.displayHistory()
-
-    return {'data': variablesSpec, 'fileName': file.filename, "result": model.getResult()}
+    # return {'fileName': file.filename, "result": model.getResult(), "correalation": correalation}
+    return {'data': variablesSpec, 'fileName': file.filename, "result": model.getResult(), "correalation": correalation, "correlationRestrictions": model.getCorrelationRestrictions()}
 
 # PAKEISTI PILNAI -> paduo
+
+
 @app.route('/file/<file>', methods=['GET'])
 def File(file):
     print(file)

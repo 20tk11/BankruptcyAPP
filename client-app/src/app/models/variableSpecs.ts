@@ -16,6 +16,7 @@ export interface VariableSpecifications {
 }
 
 export interface Result {
+    numObs: number;
     chiSquare: number;
     coxSnell: number;
     macFadden: number;
@@ -23,6 +24,7 @@ export interface Result {
     testPred: Confusion;
     trainPred: Confusion;
     variables: VariablesByRatioTypes;
+    correalation:Correalation;
 }
 export interface Confusion {
     avgAcc: number;
@@ -51,4 +53,15 @@ export interface VariablesByRatioTypes {
     economic: Array<SignificatVariables>;
     industry: Array<SignificatVariables>;
     nonfinancial: Array<SignificatVariables>;
+}
+export interface Correalation{
+    activity: string;
+    economic: string;
+    financial: string;
+    industry: string;
+    liquidity: string;
+    nonfinancial: string;
+    other: string;
+    solvency: string;
+    structure: string;
 }

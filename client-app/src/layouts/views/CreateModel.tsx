@@ -12,6 +12,7 @@ import VariablesSpecsTable from "./variables/variablesSpecsTable";
 import saveAs from "file-saver";
 import { act } from "@testing-library/react";
 import ModelView from "./model/modelView";
+import CorrelationView from "./correlation/correlationView";
 
 const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
@@ -72,6 +73,9 @@ export default observer(function CreateModel() {
             }
             else if (activeState === 'model') {
                 return <ModelView />;
+            }
+            else if (activeState === "correlation"){
+                return <CorrelationView />;
             }
         }
         return <div />;

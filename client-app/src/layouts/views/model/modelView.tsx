@@ -61,6 +61,12 @@ export default function ModelView() {
             <Divider horizontal />
             <Table stackable>
                 <Table.Body>
+                    <Table.Row >
+                        <Table.Cell>{"Number Of Observations"}</Table.Cell>
+                        <Table.Cell textAlign='right'>
+                            {modelResult?.numObs}
+                        </Table.Cell>
+                    </Table.Row>
                     <StatsRows variable={modelResult?.trainPred.nonBankruptTrue} statName={"Percentage of the model's correctly classified non-bankrupt enterprises for training data"} />
                     <StatsRows variable={modelResult?.trainPred.bankruptTrue} statName={"Percentage of the model's correctly classified bankrupt enterprises for training data"} />
                     <StatsRows variable={modelResult?.trainPred.avgAcc} statName={"Percentage of the model's correctly classified bankrupt and non-bankrupt enterprises for training data"} />

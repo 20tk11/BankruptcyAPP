@@ -38,6 +38,37 @@ structureRatios = ['5B_13', '5A_14', '5A_16', '5B_38', '5A_44']
 
 otherRatios = ['6_47', '6_49', '6_50']
 
+def getNonFinancialColumns():
+    return nonfinancialColumns
+
+def getEconomicColumns():
+    return economicColumns
+
+def getBranchColumns():
+    return industryBranchColumns
+
+def getFinancialColumns():
+    return financialRatios
+
+def getLiquidityColumns():
+    return liquidityRatios
+
+
+def getSolvencyColumns():
+    return solvencyRatios
+
+
+def getActivityColumns():
+    return activityRatios
+
+
+def getStructureColumns():
+    return structureRatios
+
+
+def getOtherColumns():
+    return otherRatios
+
 
 def findRatioGroup(Best_model):
     significantVariables = []
@@ -79,7 +110,7 @@ def findRatioGroup(Best_model):
 
 
 def getColumns():
-    return financialColumnsA
+    return financialColumnsA + financialColumnsB + financialColumnsC + nonfinancialColumns + economicColumns + industryBranchColumns
 
 
 def getFinancialColumnsA():
