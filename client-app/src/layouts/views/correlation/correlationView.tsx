@@ -1,27 +1,27 @@
 import { Divider, Table } from "semantic-ui-react";
+import { CorrelationData } from "../../../app/models/variableSpecs";
 import { useStore } from "../../../app/store/store";
+import CorrelationTable from "./correlationTable";
 
 
 
 export default function CorrelationView() {
     const { modelStore } = useStore();
-    const { modelResult } = modelStore;
-    console.log(modelResult?.variables.const)
-    Dosmth();
-    function Dosmth() {
-        
-    }
+    const { correlationResult } = modelStore;
+
+
     return (
         <>
-            <Table stackable>
-                <Table.Header>
-                    <Table.Row >
-                        <Table.HeaderCell>Independent Varible</Table.HeaderCell>
-                        <Table.HeaderCell textAlign='right'>Coefficients (P-Value)</Table.HeaderCell>
-                    </Table.Row>
-                </Table.Header>
-
-            </Table>
+            <CorrelationTable correlationData={correlationResult?.financial} />
+            <CorrelationTable correlationData={correlationResult?.liquidity} />
+            <CorrelationTable correlationData={correlationResult?.solvency} />
+            <CorrelationTable correlationData={correlationResult?.activity} />
+            <CorrelationTable correlationData={correlationResult?.structure} />
+            <CorrelationTable correlationData={correlationResult?.other} />
+            <CorrelationTable correlationData={correlationResult?.nonfinancial} />
+            <CorrelationTable correlationData={correlationResult?.economic} />
+            <CorrelationTable correlationData={correlationResult?.industry} />
         </>
     )
+
 }

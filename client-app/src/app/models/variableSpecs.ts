@@ -24,7 +24,7 @@ export interface Result {
     testPred: Confusion;
     trainPred: Confusion;
     variables: VariablesByRatioTypes;
-    correalation:Correalation;
+
 }
 export interface Confusion {
     avgAcc: number;
@@ -35,6 +35,7 @@ export interface VariablesSpecs {
     data: Array<VariableSpecifications>
     fileName: string
     result: Result;
+    correalation: Correalation;
 }
 export interface SignificatVariables {
     coefficient: number;
@@ -54,14 +55,19 @@ export interface VariablesByRatioTypes {
     industry: Array<SignificatVariables>;
     nonfinancial: Array<SignificatVariables>;
 }
-export interface Correalation{
-    activity: string;
-    economic: string;
-    financial: string;
-    industry: string;
-    liquidity: string;
-    nonfinancial: string;
-    other: string;
-    solvency: string;
-    structure: string;
+export interface Correalation {
+    activity: Array<CorrelationData>;
+    economic: Array<CorrelationData>;
+    financial: Array<CorrelationData>;
+    industry: Array<CorrelationData>;
+    liquidity: Array<CorrelationData>;
+    nonfinancial: Array<CorrelationData>;
+    other: Array<CorrelationData>;
+    solvency: Array<CorrelationData>;
+    structure: Array<CorrelationData>;
+}
+
+export interface CorrelationData {
+    column: string;
+    correlations: Array<number>;
 }

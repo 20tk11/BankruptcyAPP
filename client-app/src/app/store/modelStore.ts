@@ -1,6 +1,6 @@
 import { makeAutoObservable } from "mobx";
 import agent from "../api/agent";
-import { Result, VariableSpecifications } from "../models/variableSpecs";
+import { Correalation, Result, VariableSpecifications } from "../models/variableSpecs";
 
 export default class ModelStore {
     variableRegistry = new Map<string, VariableSpecifications>();
@@ -11,6 +11,7 @@ export default class ModelStore {
     generatedFileName = null
     generatedFile = null
     modelResult: Result | null = null;
+    correlationResult: Correalation | null = null;
 
     constructor() {
         makeAutoObservable(this)
@@ -40,6 +41,8 @@ export default class ModelStore {
             console.log(variables)
             this.setModelResult(variables.result)
             console.log(this.modelResult);
+            this.setCorrelationResult(variables.correalation)
+            console.log(this.correlationResult);
             this.setGeneratedFileName(variables.fileName)
             variables.data.forEach(element => {
                 this.setVariable(element.column, element)
@@ -86,5 +89,8 @@ export default class ModelStore {
     }
     setModelResult = (result: Result) => {
         this.modelResult = result;
+    }
+    setCorrelationResult = (result: Correalation) => {
+        this.correlationResult = result;
     }
 }

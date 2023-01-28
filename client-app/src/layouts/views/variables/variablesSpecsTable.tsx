@@ -1,5 +1,4 @@
 import { Table } from "semantic-ui-react";
-import { VariableSpecifications } from "../../../app/models/variableSpecs";
 import { useStore } from "../../../app/store/store";
 import VariableSpecsRow from "./variableSpecsRow";
 
@@ -28,7 +27,7 @@ export default function VariablesSpecsTable() {
                     <Table.HeaderCell>Constant PValue</Table.HeaderCell>
                 </Table.Row>
             </Table.Header>
-            <Table.Body>
+            <Table.Body className="tableScroll">
                 {variables.map(variable => (
                     <VariableSpecsRow key={variable.column} variable={variable} />
                 ))}
