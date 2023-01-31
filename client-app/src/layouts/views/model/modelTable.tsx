@@ -1,5 +1,6 @@
 import { Table } from "semantic-ui-react";
 import { SignificatVariables, VariableSpecifications } from "../../../app/models/variableSpecs";
+import { getName } from "../../../app/variables/variables";
 
 interface Props {
     variable: SignificatVariables[] | undefined
@@ -12,7 +13,7 @@ export default function ModelTable({ variable }: Props) {
             {variable ?
                 variable.map((variable: SignificatVariables) => (
                     <Table.Row >
-                        <Table.Cell>{variable.variable}</Table.Cell>
+                        <Table.Cell>{getName(variable.variable)}</Table.Cell>
                         <Table.Cell textAlign='right'>
                             {variable.coefficient.toFixed(2)}<br />
                             ({variable.significance.toFixed(2)})

@@ -1,5 +1,6 @@
 import { Table } from "semantic-ui-react";
 import { VariableSpecifications } from "../../../app/models/variableSpecs";
+import { getName } from "../../../app/variables/variables";
 
 interface Props {
     variable: VariableSpecifications
@@ -11,7 +12,7 @@ export default function VariableSpecsRow({ variable }: Props) {
 
 
         <Table.Row>
-            <Table.Cell>{variable.column}</Table.Cell>
+            <Table.Cell>{getName(variable.column)}</Table.Cell>
             {variable.missingPercent >= 20 ?
                 <Table.Cell negative>{variable.missingPercent.toFixed(2)}</Table.Cell> :
                 <Table.Cell>{variable.missingPercent.toFixed(2)}</Table.Cell>}

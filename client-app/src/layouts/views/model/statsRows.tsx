@@ -1,9 +1,10 @@
 import { Table } from "semantic-ui-react";
 import { SignificatVariables, VariableSpecifications } from "../../../app/models/variableSpecs";
+import { getName } from "../../../app/variables/variables";
 
 interface Props {
     variable: number | undefined
-    statName: string | undefined
+    statName: string
 }
 export default function StatsRows({ variable, statName }: Props) {
 
