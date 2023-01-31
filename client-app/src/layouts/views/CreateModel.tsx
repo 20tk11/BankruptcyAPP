@@ -16,21 +16,44 @@ import CorrelationView from "./correlation/correlationView";
 
 const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
+const options = [
+    { key: "0", text: 'None Correlation', value: "0" },
+    { key: "1", text: 'Grouped Correlation', value: "1" },
+    { key: "2", text: 'Full Correlation', value: "2" },
+]
+const options1 = [
+    { key: "0", text: 'Normal', value: "0" },
+    { key: "1", text: 'Normal + Divided', value: "1" },
+    { key: "2", text: 'Normal + Subtracted', value: "2" },
+    { key: "3", text: 'Normal + Subtracted + Divided', value: "3" },
+]
 export default observer(function CreateModel() {
 
     const { modelStore } = useStore();
     const { generatedFile, generatedFileName, loadFile, loadVariablesSpecs, variables, setSelectedFile, selectedFile, setFileIsSelected, isFilePicked } = modelStore;
     const [activeState, setActive] = useState("variables");
     const [checkboxState, setcheckboxState] = useState<string>("type1");
-
+    const [correlationState, setcorrelationState] = useState<string>("0");
+    const [usedDataState, setusedDataState] = useState<string>("0");
+    const [fileName, setfileName] = useState<string>("Select file")
     const fileReader = new FileReader();
 
     const handleOnChange = (e: any) => {
+        console.log(e.target.files[0].name)
+        setfileName(e.target.files[0].name)
         setSelectedFile(e.target.files[0]);
         setFileIsSelected(true);
     };
 
     const handleItemClick = (e: any, { name }: any) => setActive(name)
+    const handleCorrelationChange = (e: any, { value }: any) => {
+        console.log(value)
+        setcorrelationState(value)
+    }
+    const handleUsedDataChange = (e: any, { value }: any) => {
+        console.log(value)
+        setusedDataState(value)
+    }
     const handleCheckBoxChange = (e: any, { value }: any) => {
         console.log(value)
         setcheckboxState(value)
@@ -57,7 +80,7 @@ export default observer(function CreateModel() {
         if (selectedFile) {
             fileReader.onload = function (event) {
                 if (event.target) {
-                    loadVariablesSpecs(checkboxState);
+                    loadVariablesSpecs(checkboxState, correlationState, usedDataState);
                     // variables.map(variable => (
                     //     console.log(variable.column)
                     // ))
@@ -68,13 +91,14 @@ export default observer(function CreateModel() {
     };
     function TableSwitch() {
         if (variables.length > 0) {
+
             if (activeState === 'variables') {
                 return <VariablesSpecsTable />;
             }
             else if (activeState === 'model') {
                 return <ModelView />;
             }
-            else if (activeState === "correlation"){
+            else if (activeState === "correlation") {
                 return <CorrelationView />;
             }
         }
@@ -86,16 +110,34 @@ export default observer(function CreateModel() {
             <Form >
 
                 <Form>
-                    <Form.Group inline>
-                        <div className="inlineForm">
-                            <label className="ui icon button">
-                                <i className="file icon"></i>
-                                fILE
-                                <input type="file" id="csvFileInput" onChange={handleOnChange} hidden />
-                            </label>
+                    <div className="inlineForm" >
+                        <label className="ui icon button">
+                            <i className="file icon"></i>
+                            {fileName}
+                            <input type="file" id="csvFileInput" onChange={handleOnChange} hidden />
+                        </label>
 
-                        </div>
-                        <label>Data types</label>
+                    </div>
+                    <Form.Select
+                        fluid
+                        width={5}
+                        label='Correlation'
+                        onChange={handleCorrelationChange}
+                        options={options}
+                        value={correlationState}
+
+                    />
+                    <Form.Select
+                        fluid
+                        width={5}
+                        label='Used Data'
+                        value={usedDataState}
+                        onChange={handleUsedDataChange}
+                        options={options1}
+                    />
+                    <Form.Group inline>
+
+                        <label>Data Groups Uses</label>
                         <Form.Radio
                             label='Type 1'
                             value='type1'
@@ -125,12 +167,12 @@ export default observer(function CreateModel() {
                         onClick={handleOnSubmit}
                         disabled={!isFilePicked}
                     >
-                        IMPORT CSV
+                        Generate Model
                     </Button>
                 </Form>
 
             </Form>
-            <Menu tabular>
+            {variables.length > 0 ? (<Menu tabular>
                 <Menu.Item
                     name='variables'
                     active={activeState === 'variables'}
@@ -146,7 +188,7 @@ export default observer(function CreateModel() {
                     active={activeState === 'model'}
                     onClick={handleItemClick}
                 />
-            </Menu>
+            </Menu>) : <></>}
             <TableSwitch />
 
         </Container>

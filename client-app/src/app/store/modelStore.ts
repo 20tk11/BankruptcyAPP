@@ -25,12 +25,14 @@ export default class ModelStore {
         return this.generatedFile;
     }
 
-    loadVariablesSpecs = async (type: string) => {
+    loadVariablesSpecs = async (type: string, correlationState: string, usedDataState: string) => {
         console.log(type)
         const formData = new FormData();
         if (this.selectedFile) {
             formData.append("file", this.selectedFile);
             formData.append("type", type);
+            formData.append("corrState", correlationState);
+            formData.append("usedDataState", usedDataState);
         }
         this.setLoadingInitial(true);
         try {

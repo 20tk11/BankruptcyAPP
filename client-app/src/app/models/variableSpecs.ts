@@ -24,6 +24,7 @@ export interface Result {
     testPred: Confusion;
     trainPred: Confusion;
     variables: VariablesByRatioTypes;
+    correlation: Array<CorrelationData>;
 
 }
 export interface Confusion {

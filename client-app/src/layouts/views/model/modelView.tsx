@@ -1,5 +1,6 @@
 import { Divider, Table } from "semantic-ui-react";
 import { useStore } from "../../../app/store/store";
+import CorrelationTable from "../correlation/correlationTable";
 import CoefficientRows from "./coeficientRows";
 import ConstTable from "./constTable";
 import ModelTable from "./modelTable";
@@ -22,8 +23,10 @@ export default function ModelView() {
                 </Table.Header>
 
                 <Table.Body>
+                    
                     <ConstTable variable={modelResult?.variables.const} />
                     <RatioHeader variable={"Financial Ratios"} />
+                    <RatioHeader variable={"Profitability Ratios"} />
                     <ModelTable variable={modelResult?.variables.financial} />
                     <RatioHeader variable={"Liquidity Ratios"} />
                     <ModelTable variable={modelResult?.variables.liquidity} />
@@ -79,6 +82,7 @@ export default function ModelView() {
                     <CoefficientRows variable={modelResult?.negelkerke} statName={"Negelkerke R-Square"} />
                 </Table.Body>
             </Table>
+            <CorrelationTable correlationData={modelResult?.correlation} />
         </>
     )
 }

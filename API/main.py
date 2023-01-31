@@ -22,11 +22,16 @@ def after_request(response):
 def Logit():
     file = request.files['file']
     type = request.form.get('type')
-    print(type)
-    print(file)
+    corrState = request.form.get('corrState')
+    usedDataState = request.form.get('usedDataState')
     model = Model()
+    model.setUsedFinancialColumns(usedDataState)
+    model.setCorrelationRestrictionType(corrState)
     model.readFile(file)
+    model.setDataSplits()
     model.analyzeModelVariables(type)
+    model.setCorrelation()
+    model.setCorrelationRestrictions()
     correalation = model.getCorrelation()
     variablesSpec = model.getVariableStats()
     model.getModel()

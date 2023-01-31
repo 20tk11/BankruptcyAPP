@@ -115,8 +115,8 @@ class Variables():
     def getVariables(self):
         return self.variables
 
-    def getCorrelation(self):
-        self.correlationRestrictions = []
+    def setCorrelation(self):
+        self.correlationRestrictions = {}
         financial = self.getCorrelationByRatioType(
             getFinancialColumns())
         liquidity = self.getCorrelationByRatioType(
@@ -133,14 +133,27 @@ class Variables():
         economic = self.getCorrelationByRatioType(
             getEconomicColumns())
         industry = self.getCorrelationByRatioType(getBranchColumns())
-        return {"financial": financial, "liquidity": liquidity, "solvency": solvency,
-                "activity": activity, "structure": structure, "other": other, "nonfinancial": nonfinancial,
-                "economic": economic, "industry": industry}
+        self.correlation = {"financial": financial, "liquidity": liquidity, "solvency": solvency,
+                            "activity": activity, "structure": structure, "other": other, "nonfinancial": nonfinancial,
+                            "economic": economic, "industry": industry}
+
+    def getCorrelation(self):
+        return self.correlation
 
     def getCorrelationByRatioType(self, columns):
         correlation = pd.DataFrame()
         for i in np.intersect1d(columns, self.variables.columns):
             correlation[i] = self.variables[i]
+        correlation = correlation.dropna()
+        corr_matrix = correlation.corr()
+        corr_result = self.getCorrForObject(corr_matrix)
+        print(corr_result)
+        return corr_result
+
+    def getCorrelationForResult(self, columns, data):
+        correlation = pd.DataFrame()
+        for i in columns:
+            correlation[i] = data[i]
         correlation = correlation.dropna()
         corr_matrix = correlation.corr()
         corr_result = self.getCorrForObject(corr_matrix)
@@ -153,16 +166,121 @@ class Variables():
             cor = {"column": corr_matrix.columns[i],
                    "correlations": corr_matrix.values[i].tolist()}
             columnCorrelation.append(cor)
-            corrRe = []
-            for j in range(len(corr_matrix.values[i].tolist())):
-                if corr_matrix.values[i][j] >= 0.7 or corr_matrix.values[i][j] <= -0.7:
-                    corrRe.append(corr_matrix.columns[j])
-            corrRestrictionColumn = {corr_matrix.columns[i]:corrRe }
-            self.correlationRestrictions.append(corrRestrictionColumn)
         return columnCorrelation
+
+    def getCorrelationForModel(self, corr_matrix):
+        columnCorrelation = []
+        for i in range(len(corr_matrix.values)):
+            cor = {"column": corr_matrix.columns[i],
+                   "correlations": corr_matrix.values[i].tolist()}
+            columnCorrelation.append(cor)
 
     def getCorrelationRestrictions(self):
         return self.correlationRestrictions
+
+    def getRestrictions(self, column):
+        return self.correlationRestrictions[column]
+
+    def setCorrelationRestrictions(self, data, type):
+        self.correlationRestrictions = {}
+        if (type == '0'):
+            self.setRestrictionsForAllVariables(
+                data, self.getSignificant(), type)
+        if (type == '1'):
+            self.setRestrictionsForAllVariables(data,
+                                                getFinancialColumns(), type)
+            self.setRestrictionsForAllVariables(data,
+                                                getLiquidityColumns(), type)
+            self.setRestrictionsForAllVariables(data,
+                                                getSolvencyColumns(), type)
+            self.setRestrictionsForAllVariables(data,
+                                                getActivityColumns(), type)
+            self.setRestrictionsForAllVariables(data,
+                                                getStructureColumns(), type)
+            self.setRestrictionsForAllVariables(data,
+                                                getOtherColumns(), type)
+            self.setRestrictionsForAllVariables(data,
+                                                getNonFinancialColumns(), type)
+            self.setRestrictionsForAllVariables(data,
+                                                getEconomicColumns(), type)
+            self.setRestrictionsForAllVariables(data,
+                                                getBranchColumns(), type)
+        if (type == '2'):
+            self.setRestrictionsForAllVariables(data,
+                                                self.getSignificant(), type)
+        return 1
+
+    def corrRestrictionsSpecified(self, column, corrRe):
+        if column == 'I.1.10':
+            corrRe.append('I.1.11')
+        if column == 'I.1.11':
+            corrRe.append('I.1.10')
+        if column == 'I.1.20':
+            corrRe.append('I.1.21')
+        if column == 'I.1.21':
+            corrRe.append('I.1.20')
+        if column == 'I.1.30':
+            corrRe.append('I.1.31')
+        if column == 'I.1.31':
+            corrRe.append('I.1.30')
+        if column == 'I.2.10':
+            corrRe.append('I.2.20')
+            corrRe.append('I.2.30')
+        if column == 'I.2.20':
+            corrRe.append('I.2.10')
+            corrRe.append('I.2.30')
+        if column == 'I.2.30':
+            corrRe.append('I.2.20')
+            corrRe.append('I.2.10')
+        if column == 'II.2.10':
+            corrRe.append('II.2.11')
+        if column == 'II.2.11':
+            corrRe.append('II.2.10')
+        if column == 'III.1.10':
+            corrRe.append('III.1.11')
+        if column == 'III.1.11':
+            corrRe.append('III.1.10')
+        if column == 'III.1.20':
+            corrRe.append('III.1.21')
+        if column == 'III.1.21':
+            corrRe.append('III.1.20')
+        if column == 'III.1.30':
+            corrRe.append('III.1.31')
+        if column == 'III.1.31':
+            corrRe.append('III.1.30')
+        if column == 'III.1.40':
+            corrRe.append('III.1.41')
+        if column == 'III.1.41':
+            corrRe.append('III.1.40')
+        if column == 'III.2.10':
+            corrRe.append('III.2.11')
+        if column == 'III.2.11':
+            corrRe.append('III.2.10')
+        if column == 'III.3.10':
+            corrRe.append('III.3.11')
+        if column == 'III.3.11':
+            corrRe.append('III.3.10')
+
+    def setRestrictionsForAllVariables(self, data, columns, type):
+
+        if (type == '0'):
+            for i in columns:
+                corrRe = [i]
+                self.corrRestrictionsSpecified(i, corrRe)
+                self.correlationRestrictions[i] = corrRe
+        else:
+            correlation = pd.DataFrame()
+            correlation[columns] = data[columns]
+            correlation = correlation.dropna()
+            corr_matrix = correlation.corr()
+            for i in range(len(corr_matrix.values)):
+                corrRe = []
+                for j in range(len(corr_matrix.values[i].tolist())):
+                    if corr_matrix.values[i][j] >= 0.7 or corr_matrix.values[i][j] <= -0.7:
+                        corrRe.append(corr_matrix.columns[j])
+                self.corrRestrictionsSpecified(i, corrRe)
+                self.correlationRestrictions[corr_matrix.columns[i]] = corrRe
+
 
 class VariableSpecifications:
 
@@ -215,69 +333,110 @@ class Model:
         self.train, self.test = train_test_split(
             self.variables.getVariables(), test_size=0.2, random_state=42, stratify=self.variables.getVariables()['IsBankrupt'])
 
+    # 0 -> Variables assigned to models are not valued by correlation
+    # 1 -> Variables assigned to models are valued by group correlation
+    # 2 -> Variables assigned to models are valued by all correlations
+    def setCorrelationRestrictionType(self, corrType):
+        self.corrRestrictionType = corrType
+
+    # 0 -> Normal Variables
+    # 1 -> Normal + Divided
+    # 2 -> Normal + Subtracted
+    # 3 -> Normal + Divided + Subtracted
+    def setUsedFinancialColumns(self, usedFinCol):
+        self.usedFinCol = usedFinCol
+
     def getModel(self):
+        self.globalBestLLR = 0
         self.added_columns = []
         self.tests = pd.DataFrame(
             columns=['LLR', 'prsquared', 'aic', 'bic', 'p-value'])
         self.max_LR = None
         self.modellist = []
         self.modelLog = pd.DataFrame(
-            columns=['LLR', 'prsquared', 'aic', 'bic'])
+            columns=['LLR', 'prsquared', 'aic', 'bic', 'trainPred', 'testPred'])
         self.Best_model = None
         self.columnLog = []
-        self.setDataSplits()
+
         counter = 0
-        print(self.variables.getSignificant())
-        for i in range(8):
+
+        while True:
             Best_column = None
             for column in self.variables.getSignificant():
                 if column not in self.added_columns:
-                    endog = self.train['IsBankrupt']
-                    if len(self.added_columns) == 0:
-                        exog = sm.add_constant(self.train[column])
-                    else:
-                        exog = sm.add_constant(
-                            self.train[self.added_columns + [column]])
-                    self.model = sm.Logit(endog, exog, missing='drop').fit(
-                        method="bfgs")
-                    print(self.model.summary())
-                    self.tests.loc[column] = [
-                        self.model.llr, self.model.prsquared, self.model.bic, self.model.aic, self.model.pvalues[-1]]
-                    if self.max_LR == None:
-                        self.max_LR = self.model.llr
-                        Best_column = column
-                        self.Best_model = self.model
-                    elif self.model.pvalues[-1] < 0.05:
-                        if self.max_LR < self.model.llr:
-                            self.max_LR = self.model.llr
-                            Best_column = column
-                            self.Best_model = self.model
+                    if not any(x in self.added_columns for x in self.variables.getRestrictions(column)):
+                        checkAddedColumns = self.added_columns + [column]
+                        checkAddedColumns.sort()
+                        tempColumnLog = deepcopy(self.columnLog)
+                        for tempcol in tempColumnLog:
+                            tempcol.sort()
+                        if checkAddedColumns not in tempColumnLog:
+                            endog = self.train['IsBankrupt']
+                            if len(self.added_columns) == 0:
+                                exog = sm.add_constant(self.train[column])
+                            else:
+                                exog = sm.add_constant(
+                                    self.train[self.added_columns + [column]])
+                            self.model = sm.Logit(endog, exog, missing='drop').fit(
+                                method="bfgs")
+                            print(self.model.summary())
+                            self.tests.loc[column] = [
+                                self.model.llr, self.model.prsquared, self.model.bic, self.model.aic, self.model.pvalues[-1]]
+                            if self.max_LR == None:
+                                self.max_LR = self.model.llr
+                                Best_column = column
+                                self.Best_model = self.model
+                            elif self.model.pvalues[-1] < 0.05:
+                                if self.max_LR < self.model.llr:
+                                    self.max_LR = self.model.llr
+                                    Best_column = column
+                                    self.Best_model = self.model
             if (Best_column == None):
                 break
+
             self.added_columns.append(Best_column)
             self.columnLog.append(deepcopy(self.added_columns))
+            trainRes = self.formConfusionMatrix(self.train)
+            testRes = self.formConfusionMatrix(self.test)
             self.modelLog.loc[counter] = [
-                self.Best_model.llr, self.Best_model.prsquared, self.Best_model.bic, self.Best_model.aic]
+                self.Best_model.llr, self.Best_model.prsquared, self.Best_model.bic, self.Best_model.aic, trainRes['avgAcc'], testRes['avgAcc']]
             counter = counter + 1
             self.modellist.append(self.Best_model)
             print(self.Best_model.summary())
-            for j in range(1, len(self.Best_model.pvalues)):
-                if (self.Best_model.pvalues[j] >= 0.05):
-                    print(self.Best_model.pvalues[j])
-                    print(self.Best_model.pvalues.index[j])
-                    self.added_columns.remove(self.Best_model.pvalues.index[j])
-                    endog = self.train['IsBankrupt']
-                    exog = sm.add_constant(
-                        self.train[self.added_columns])
-                    self.model = sm.Logit(endog, exog, missing='drop').fit(
-                        method="bfgs")
-                    self.Best_model = self.model
-                    self.columnLog.append(deepcopy(self.added_columns))
-                    self.modelLog.loc[counter] = [
-                        self.Best_model.llr, self.Best_model.prsquared, self.Best_model.bic, self.Best_model.aic]
-                    counter = counter + 1
-                    self.modellist.append(self.Best_model)
+            deleted = False
+            while True:
+                for j in range(1, len(self.Best_model.pvalues)):
+                    if (self.Best_model.pvalues[j] >= 0.05):
+                        print(self.Best_model.pvalues[j])
+                        print(self.Best_model.pvalues.index[j])
+                        self.added_columns.remove(
+                            self.Best_model.pvalues.index[j])
+                        endog = self.train['IsBankrupt']
+                        exog = sm.add_constant(
+                            self.train[self.added_columns])
+                        self.model = sm.Logit(endog, exog, missing='drop').fit(
+                            method="bfgs")
+                        self.Best_model = self.model
+                        self.max_LR = self.model.llr
+                        self.columnLog.append(deepcopy(self.added_columns))
+                        self.modelLog.loc[counter] = [
+                            self.Best_model.llr, self.Best_model.prsquared, self.Best_model.bic, self.Best_model.aic, trainRes['avgAcc'], testRes['avgAcc']]
+                        counter = counter + 1
+                        self.modellist.append(self.Best_model)
+                        deleted = True
+                        break
+                    else:
+                        deleted = False
+                if not deleted:
                     break
+            if (self.globalBestLLR < self.max_LR):
+                self.globalBestLLR = self.max_LR
+                self.globalBestModel = self.Best_model
+                self.globalBestColumns = deepcopy(self.added_columns)
+        self.Best_model = self.globalBestModel
+        print(self.globalBestColumns)
+        self.added_columns = self.globalBestColumns
+        print(self.added_columns)
         print(self.Best_model.summary())
 
     def formSignificantVariables(self):
@@ -332,9 +491,11 @@ class Model:
         MF = self.getMcFadden()
         ChiSq = self.getChiSquare()
 
+        correlation = self.variables.getCorrelationForResult(
+            self.added_columns, self.train)
         return {"variables": variables, "trainPred": confusionMatrixTrainData,
                 "testPred": confusionMatrixTestData, "coxSnell": CS, "negelkerke": Negel,
-                "macFadden": MF, "chiSquare": ChiSq, "numObs": self.Best_model.nobs}
+                "macFadden": MF, "chiSquare": ChiSq, "numObs": self.Best_model.nobs, "correlation": correlation}
 
     def compareLR(self, column):
         if self.max_LR == None:
@@ -359,11 +520,17 @@ class Model:
         self.tests = self.tests.sort_values(by=['LLR'], ascending=False)
         print(self.tests)
 
-    def getCorrelation(self):
-        return self.variables.getCorrelation()
+    def setCorrelation(self):
+        self.variables.setCorrelation()
 
     def getCorrelationRestrictions(self):
         return self.variables.getCorrelationRestrictions()
+
+    def getCorrelation(self):
+        return self.variables.getCorrelation()
+
+    def setCorrelationRestrictions(self):
+        return self.variables.setCorrelationRestrictions(self.train, self.corrRestrictionType)
 
 
 class ExcelGenerator:
