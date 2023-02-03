@@ -13,9 +13,8 @@ Flow of project:
   5. Add a Self-Organizing Map and Binary Tree models to the api 
 
 ToDo:
- * Add correalation analysis for dataset
- * Display correalation of dataset variables in client-side
- *  update ReadMe file when there will be more free time
+ * Fix bugs for full correlation:
+  * On some cases Full correlation doesn't take variables only by full correlation
  
 Issues to fix:
  * Fix errors caused by faulty columns in the method singleLogit
