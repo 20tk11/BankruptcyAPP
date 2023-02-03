@@ -20,3 +20,21 @@ ToDo:
 Issues to fix:
  * Fix errors caused by faulty columns in the method singleLogit
 
+Screenshots of Webpage:
+
+MainPage:
+![image](https://user-images.githubusercontent.com/85391870/216516539-0312ef49-3e0d-4f3a-93f9-81fac7baf8d1.png)
+
+CreateModel Page:
+ * PreModel
+ 
+ * Created Model Variable Statistics
+ ![image](https://user-images.githubusercontent.com/85391870/216516649-7f853c48-7e23-417b-819d-bb13cad01c17.png)
+ * Created Model Correlations
+ ![image](https://user-images.githubusercontent.com/85391870/216516693-02f13135-65d1-40cf-9961-5857be62dff2.png)
+ * Created Model Generated Model
+ ![image](https://user-images.githubusercontent.com/85391870/216516818-c151f1f6-1896-41e3-b2e9-832607e667a2.png)
+ ![image](https://user-images.githubusercontent.com/85391870/216516848-6ee9cd2c-9306-4b0d-82a4-cf5dc53ac1fe.png)
+ * Created Model Generated Model's subModel with removed correlations
+ ![image](https://user-images.githubusercontent.com/85391870/216516913-1760d26a-9be1-4a87-a76f-3091d2435095.png)
+ ![image](https://user-images.githubusercontent.com/85391870/216516938-3a3a16f3-23d8-4b98-8cde-57eae41c24c7.png)
