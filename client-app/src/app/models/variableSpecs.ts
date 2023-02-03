@@ -37,6 +37,7 @@ export interface VariablesSpecs {
     fileName: string
     result: Result;
     correalation: Correalation;
+    removedCorrModel: Result;
 }
 export interface SignificatVariables {
     coefficient: number;

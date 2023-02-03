@@ -13,6 +13,7 @@ import saveAs from "file-saver";
 import { act } from "@testing-library/react";
 import ModelView from "./model/modelView";
 import CorrelationView from "./correlation/correlationView";
+import ModelViewRemovedCorr from "./model/modelViewRemovedCorr";
 
 const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
@@ -91,7 +92,7 @@ export default observer(function CreateModel() {
     };
     function TableSwitch() {
         if (variables.length > 0) {
-
+            console.log(activeState)
             if (activeState === 'variables') {
                 return <VariablesSpecsTable />;
             }
@@ -100,6 +101,9 @@ export default observer(function CreateModel() {
             }
             else if (activeState === "correlation") {
                 return <CorrelationView />;
+            }
+            else if (activeState === 'modelAfterCorr') {
+                return <ModelViewRemovedCorr />
             }
         }
         return <div />;
@@ -186,6 +190,11 @@ export default observer(function CreateModel() {
                 <Menu.Item
                     name='model'
                     active={activeState === 'model'}
+                    onClick={handleItemClick}
+                />
+                <Menu.Item
+                    name='modelAfterCorr'
+                    active={activeState === 'modelAfterCorr'}
                     onClick={handleItemClick}
                 />
             </Menu>) : <></>}

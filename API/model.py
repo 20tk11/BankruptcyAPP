@@ -379,7 +379,7 @@ class Model:
                                     self.train[self.added_columns + [column]])
                             self.model = sm.Logit(endog, exog, missing='drop').fit(
                                 method="bfgs")
-                            print(self.model.summary())
+                            # print(self.model.summary())
                             self.tests.loc[column] = [
                                 self.model.llr, self.model.prsquared, self.model.bic, self.model.aic, self.model.pvalues[-1]]
                             if self.max_LR == None:
@@ -393,7 +393,6 @@ class Model:
                                     self.Best_model = self.model
             if (Best_column == None):
                 break
-
             self.added_columns.append(Best_column)
             self.columnLog.append(deepcopy(self.added_columns))
             trainRes = self.formConfusionMatrix(self.train)
@@ -402,7 +401,7 @@ class Model:
                 self.Best_model.llr, self.Best_model.prsquared, self.Best_model.bic, self.Best_model.aic, trainRes['avgAcc'], testRes['avgAcc']]
             counter = counter + 1
             self.modellist.append(self.Best_model)
-            print(self.Best_model.summary())
+            # print(self.Best_model.summary())
             deleted = False
             while True:
                 for j in range(1, len(self.Best_model.pvalues)):
@@ -434,13 +433,53 @@ class Model:
                 self.globalBestModel = self.Best_model
                 self.globalBestColumns = deepcopy(self.added_columns)
         self.Best_model = self.globalBestModel
-        print(self.globalBestColumns)
+        # print(self.globalBestColumns)
         self.added_columns = self.globalBestColumns
-        print(self.added_columns)
-        print(self.Best_model.summary())
+        self.getInfluence()
+        endog = self.train['IsBankrupt']
+        exog = sm.add_constant(
+            self.train[self.globalBestColumns])
+        self.model = sm.Logit(endog, exog, missing='drop').fit(
+            method="bfgs")
+        recursionCounter = 0
+
+        print(self.model.summary())
+        if (any(isLarger >= 0.05 for isLarger in self.model.pvalues)):
+            recursionCounter = self.getModel() + 1
+        # print(self.added_columns)
+        # print(self.Best_model.summary())
+        self.Best_model = self.model
+        return recursionCounter
 
     def formSignificantVariables(self):
         return findRatioGroup(self.Best_model)
+
+    def getInfluence(self):
+        while True:
+            removeVars = []
+            model1 = sm.OLS(self.train['IsBankrupt'], sm.add_constant(
+                self.train[self.globalBestColumns]), missing='drop').fit()
+            influence = model1.get_influence().summary_frame()
+            exceptCol = ['standard_resid', 'hat_diag',
+                         'dffits_internal', 'cooks_d', 'dffits', 'student_resid']
+            for i in filter(lambda i: i not in exceptCol, influence.columns):
+                print(influence[i].describe())
+                rowInfluence = influence.index[influence[i] > 1].tolist()
+                print(rowInfluence)
+                removeVars = removeVars + rowInfluence
+            # print("----------------------------")
+            # print(self.train)
+            if len(removeVars) < 1:
+                break
+            tempDataFrame = self.train.drop(
+                removeVars, inplace=False)
+            # print(influence.head())
+            # print(influence.columns)
+            # print(removeVars)
+            # print(self.train)
+            # print(tempDataFrame)
+            # print("----------------------------")
+            self.train = tempDataFrame
 
     def formConfusionMatrix(self, data):
         significantCoef = pd.DataFrame()
@@ -463,6 +502,33 @@ class Model:
         Tboth = (confusion_matrix(classification_data['true'], classification_data['pred'])[
             1][1] + confusion_matrix(classification_data['true'], classification_data['pred'])[0][0]) / len(classification_data) * 100
         return {"nonBankruptTrue": Tnonbancruptcy, "bankruptTrue": Tbancruptcy, "avgAcc": Tboth}
+
+    def removeCorFromFinal(self, correlated):
+        maxstd = 0
+        maxstdCol = None
+        correlatedColumns = correlated
+        if (len(correlatedColumns) < 1):
+            return 1
+        print(self.Best_model.bse[correlatedColumns])
+        for i in correlatedColumns:
+            if (self.Best_model.bse[i] > maxstd):
+                maxstd = self.Best_model.bse[i]
+                maxstdCol = i
+        print(self.added_columns)
+        self.added_columns.remove(maxstdCol)
+        print(self.added_columns)
+        print(maxstd)
+        print(maxstdCol)
+        endog = self.train['IsBankrupt']
+        exog = sm.add_constant(
+            self.train[self.added_columns])
+        self.model = sm.Logit(endog, exog, missing='drop').fit(
+            method="bfgs")
+        self.Best_model = self.model
+        print(self.Best_model.bse)
+        correlatedTemp = self.variables.getCorrelationForResult(
+            self.added_columns, self.train)
+        self.removeCorrFromModel(correlatedTemp)
 
     def getCoxSnell(self):
         coxSnell = 1 - math.exp((self.Best_model.llnull -
@@ -493,9 +559,19 @@ class Model:
 
         correlation = self.variables.getCorrelationForResult(
             self.added_columns, self.train)
+
         return {"variables": variables, "trainPred": confusionMatrixTrainData,
                 "testPred": confusionMatrixTestData, "coxSnell": CS, "negelkerke": Negel,
                 "macFadden": MF, "chiSquare": ChiSq, "numObs": self.Best_model.nobs, "correlation": correlation}
+
+    def removeCorrFromModel(self, correlation):
+        correlated = set()
+        for i in range(len(correlation)):
+            for j in range(len(correlation[i]["correlations"])):
+                if (correlation[i]["column"] != correlation[j]["column"]):
+                    if (abs(correlation[i]["correlations"][j]) >= 0.7):
+                        correlated.add(correlation[j]["column"])
+        self.removeCorFromFinal(correlated)
 
     def compareLR(self, column):
         if self.max_LR == None:

@@ -11,6 +11,7 @@ export default class ModelStore {
     generatedFileName = null
     generatedFile = null
     modelResult: Result | null = null;
+    modelResultRemovedCorr: Result | null = null;
     correlationResult: Correalation | null = null;
 
     constructor() {
@@ -43,6 +44,8 @@ export default class ModelStore {
             console.log(variables)
             this.setModelResult(variables.result)
             console.log(this.modelResult);
+            this.setModelResultRemovedCorr(variables.removedCorrModel)
+            console.log(this.modelResultRemovedCorr);
             this.setCorrelationResult(variables.correalation)
             console.log(this.correlationResult);
             this.setGeneratedFileName(variables.fileName)
@@ -94,5 +97,8 @@ export default class ModelStore {
     }
     setCorrelationResult = (result: Correalation) => {
         this.correlationResult = result;
+    }
+    setModelResultRemovedCorr = (result: Result) => {
+        this.modelResultRemovedCorr = result;
     }
 }

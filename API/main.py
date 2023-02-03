@@ -20,6 +20,7 @@ def after_request(response):
 
 @app.route("/logit", methods=['POST'])
 def Logit():
+    print("Logit")
     file = request.files['file']
     type = request.form.get('type')
     corrState = request.form.get('corrState')
@@ -35,9 +36,12 @@ def Logit():
     correalation = model.getCorrelation()
     variablesSpec = model.getVariableStats()
     model.getModel()
+    resultModel = model.getResult()
+    model.removeCorrFromModel(resultModel["correlation"])
     model.displayHistory()
+    print("returned best model")
     # return {'fileName': file.filename, "result": model.getResult(), "correalation": correalation}
-    return {'data': variablesSpec, 'fileName': file.filename, "result": model.getResult(), "correalation": correalation, "correlationRestrictions": model.getCorrelationRestrictions()}
+    return {'data': variablesSpec, 'fileName': file.filename, "result": resultModel, "correalation": correalation, "correlationRestrictions": model.getCorrelationRestrictions(), "removedCorrModel": model.getResult()}
 
 # PAKEISTI PILNAI -> paduo
 
