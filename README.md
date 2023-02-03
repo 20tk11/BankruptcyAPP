@@ -27,7 +27,7 @@ MainPage:
 
 CreateModel Page:
  * PreModel
- 
+ ![image](https://user-images.githubusercontent.com/85391870/216517095-70fe9d28-b328-489f-a720-c1fb6981cd8a.png)
  * Created Model Variable Statistics
  ![image](https://user-images.githubusercontent.com/85391870/216516649-7f853c48-7e23-417b-819d-bb13cad01c17.png)
  * Created Model Correlations
