@@ -1,3 +1,4 @@
+from controllers.variables import Variables
 from controllers.fileReader import FileReader
 from controllers.modelParameters import ModelParameters
 from controllers.file import File
@@ -28,10 +29,12 @@ class Model:
     setModelParameters(type, corrState, modelType, usedDataState)
         Set parameters for model by which the model will be generated
     read()
+        read file into a DataFrame
     """
 
     file = File
     modelParameters = ModelParameters
+    variables = Variables
 
     def __init__(self):
         self.var = "1"
@@ -90,7 +93,7 @@ class Model:
         """
         Description
         -------
-        Reads inserted file
+        Sets DataFrame to Variables Object
 
         Returns
         -------
@@ -98,6 +101,6 @@ class Model:
             informs that reading the file caused an error
         """
         try:
-            FileReader.read(self.file)
+            self.variables.setData(FileReader.read(self.file))
         except:
             return 400

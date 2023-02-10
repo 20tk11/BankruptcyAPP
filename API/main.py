@@ -27,13 +27,14 @@ def Logit():
     if (model.setFile(request.files['file']) == 400):
         return ErrorHandler.fileTypeError()
     model.setModelParameters(request.form.get('type'), request.form.get('corrState'),
-                             request.form.get('modelType'), request.form.get('usedDataState'))
+                             request.form.get('usedDataState'), request.form.get('modelType'))
     print(model.modelParameters.getType())
     print(model.modelParameters.getCorrState())
     print(model.modelParameters.getModelType())
     print(model.modelParameters.getUsedDataState())
     if (model.read() == 400):
         return ErrorHandler.fileReadError(model.getFile())
+    print(model.variables.getData())
     return "1"
 
 
