@@ -1,3 +1,4 @@
+from controllers.modelParameters import ModelParameters
 from controllers.file import File
 
 
@@ -23,9 +24,12 @@ class Model:
         Set file containing data
     getFile()
         Get file containing data
+    setModelParameters(type, corrState, modelType, usedDataState)
+        Set parameters for model by which the model will be generated
     """
 
     file = File
+    modelParameters = ModelParameters
 
     def __init__(self):
         self.var = "1"
@@ -57,3 +61,24 @@ class Model:
             a file containing data used in model creation and file type
         """
         return self.file
+
+    @classmethod
+    def setModelParameters(self, type, corrState, modelType, usedDataState):
+        """
+        Description
+        -------
+        Set parameters for model by which the model will be generated
+
+        Parameters
+        ----------
+        type : str
+            parameter which describes which types of data to use when creating an model
+        corrState : str
+            parameter which describes what kind of correlation requirement to use when choosing variables to add into the model
+        modelType : str
+            parameter which describes to generate a model from financial data or custom
+        usedDataState : str
+            parameter which describes if to use bonus variables in the model: Divided and Subtracted
+        """
+        self.modelParameters.setModelParameters(
+            type, corrState, modelType, usedDataState)
