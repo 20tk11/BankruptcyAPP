@@ -1,8 +1,11 @@
 import json
-from flask import Flask, Response, request, send_file
+from flask import Flask, Response, abort, jsonify, make_response, request, send_file
 from flask_cors import CORS
 import pandas as pd
-from model import Model, Variables, ExcelGenerator
+from controllers.errorHandler import ErrorHandler
+
+from controllers.model import Model
+
 
 app = Flask(__name__)
 CORS(app)
@@ -20,30 +23,29 @@ def after_request(response):
 
 @app.route("/logit", methods=['POST'])
 def Logit():
-    print("Logit")
-    file = request.files['file']
-    type = request.form.get('type')
-    corrState = request.form.get('corrState')
-    usedDataState = request.form.get('usedDataState')
-    model = Model()
-    model.setUsedFinancialColumns(usedDataState)
-    model.setCorrelationRestrictionType(corrState)
-    model.readFile(file)
-    model.setDataSplits()
-    model.analyzeModelVariables(type)
-    model.setCorrelation()
-    model.setCorrelationRestrictions()
-    correalation = model.getCorrelation()
-    variablesSpec = model.getVariableStats()
-    model.getModel()
-    resultModel = model.getResult()
-    model.removeCorrFromModel(resultModel["correlation"])
-    model.displayHistory()
-    print("returned best model")
-    # return {'fileName': file.filename, "result": model.getResult(), "correalation": correalation}
-    return {'data': variablesSpec, 'fileName': file.filename, "result": resultModel, "correalation": correalation, "correlationRestrictions": model.getCorrelationRestrictions(), "removedCorrModel": model.getResult()}
+    model = Model
+    if (model.setFile(request.files['file']) == 400):
+        return ErrorHandler.fileTypeError()
+    print(model.setFile(request.files['file']))
+    print(model.getFile().getFile())
+    print(model.getFile().getFileType())
+    print(request.form.get('type'))
+    print(request.form.get('corrState'))
+    print(request.form.get('usedDataState'))
+    print(request.form.get('modelType'))
+    return "1"
+
+
+@app.route("/test", methods=['POST'])
+def Test():
+    return jsonify(status=400, error="File type is incompatible", description="Ensure File type is correct"), 400
 
 # PAKEISTI PILNAI -> paduo
+# formData.append("file", this.selectedFile);
+#             formData.append("type", type);
+#             formData.append("corrState", correlationState);
+#             formData.append("usedDataState", usedDataState);
+#             formData.append("modelType", modelType);
 
 
 @app.route('/file/<file>', methods=['GET'])

@@ -81,7 +81,7 @@ export default observer(function CreateModel() {
         if (selectedFile) {
             fileReader.onload = function (event) {
                 if (event.target) {
-                    loadVariablesSpecs(checkboxState, correlationState, usedDataState);
+                    loadVariablesSpecs(checkboxState, correlationState, usedDataState, "Financial");
                     // variables.map(variable => (
                     //     console.log(variable.column)
                     // ))

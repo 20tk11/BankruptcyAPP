@@ -321,6 +321,7 @@ class Model:
         self.variables = Variables()
 
     def readFile(self, file):
+         
         self.variables.setDataframe(file, file.filename.rsplit('.', 1)[-1])
 
     def analyzeModelVariables(self, type):
