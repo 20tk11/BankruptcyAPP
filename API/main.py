@@ -34,7 +34,9 @@ def Logit():
     print(model.modelParameters.getUsedDataState())
     if (model.read() == 400):
         return ErrorHandler.fileReadError(model.getFile())
-    print(model.variables.getData())
+    print(model.variables.getData().columns.tolist())
+    print(model.variables.getData().dtypes['1B_1'])
+    print(model.variables.getData().dtypes['HelpIS'])
     return "1"
 
 
