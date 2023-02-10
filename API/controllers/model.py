@@ -1,3 +1,4 @@
+from controllers.fileReader import FileReader
 from controllers.modelParameters import ModelParameters
 from controllers.file import File
 
@@ -26,6 +27,7 @@ class Model:
         Get file containing data
     setModelParameters(type, corrState, modelType, usedDataState)
         Set parameters for model by which the model will be generated
+    read()
     """
 
     file = File
@@ -82,3 +84,20 @@ class Model:
         """
         self.modelParameters.setModelParameters(
             type, corrState, modelType, usedDataState)
+
+    @classmethod
+    def read(self):
+        """
+        Description
+        -------
+        Reads inserted file
+
+        Returns
+        -------
+        Status Code
+            informs that reading the file caused an error
+        """
+        try:
+            FileReader.read(self.file)
+        except:
+            return 400

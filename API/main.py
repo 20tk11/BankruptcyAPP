@@ -32,6 +32,8 @@ def Logit():
     print(model.modelParameters.getCorrState())
     print(model.modelParameters.getModelType())
     print(model.modelParameters.getUsedDataState())
+    if (model.read() == 400):
+        return ErrorHandler.fileReadError(model.getFile())
     return "1"
 
 
