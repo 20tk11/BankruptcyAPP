@@ -2,6 +2,9 @@
 from controllers.variableSpecification import VariableSpecification
 from variables.variables import informationalColumns, profitabilityRatios, liquidityRatios, solvencyRatios, activityRatios, structureRatios, otherRatios, nonfinancialColumns, economicColumns, industryBranchColumns
 from controllers.variablesSpecifications import VariablesSpecifications
+from scipy.stats import kstest
+from scipy.stats import mannwhitneyu
+import statsmodels.api as sm
 
 
 class Variables:
@@ -18,8 +21,9 @@ class Variables:
         DataFrame which stores data from a file
     variableSpecifications: VariableSpecifications
         Stores Specifications for data
+
     Methods
-    -------
+    ----------
     setData(file)
         Set DataFrame with data from a file
     determineVariableSuitability()
@@ -32,6 +36,18 @@ class Variables:
         Analyzes variables of DataFrame
     findRatioGroup()
         finds for which ratio group a variable belongs to
+    getMissingPercent(column) 
+        find percentage of missing records in DataFrame's column
+    ksTest(column) 
+        Executes Kolmogorov-Smirnov test
+    MWUTest(column, modelType) 
+        Executes Mann-Whiteney U test
+    singleLogit(column, modelType) 
+        Makes a logistic regression model for each suitable DataFrame column
+    MWUTestByModelType(modelType) 
+        splits dependant DataFrame's column into splits of True and False (1,0)
+    logitEndog(modelType, data)
+        Get endog for Logistic regression depending if it is Financial or Custom logistic model
     """
 
     def __init__(self):
@@ -81,7 +97,7 @@ class Variables:
         Gets the number of unique values in DataFrame column
         ...
 
-        Parameters 
+        Parameters
         -------
         column: string
             DataFrame column name
@@ -108,7 +124,7 @@ class Variables:
             self.variables[i] = self.variables[i].astype('float64')
             self.variableSpecifications.addValidColumn(i)
 
-    def analyzeVariables(self):
+    def analyzeVariables(self, modelType):
         """
         Description
         -------
@@ -119,7 +135,14 @@ class Variables:
         for i in self.variableSpecifications.validColumns:
             dataType = self.variables[i].dtype
             ratioGroup = self.findRatioGroup(i)
-            specification = VariableSpecification(i, dataType, ratioGroup)
+            missingPercent = self.getMissingPercent(i)
+            ksResult = self.ksTest(i)
+            mw = self.MWUTest(i, modelType)
+            modelConstPValue, modelValuePValue, modelConstStatistic, modelValueStatistic, constant, value = self.singleLogit(
+                i, modelType)
+            specification = VariableSpecification(i, dataType, ratioGroup, missingPercent, ksResult[0], ksResult[1],
+                                                  mw[0], mw[1], value, constant, modelValueStatistic, modelConstStatistic,
+                                                  modelValuePValue, modelConstPValue)
             self.variableSpecifications.addVariableSpecification(
                 specification.toJson())
 
@@ -162,3 +185,160 @@ class Variables:
             return "ResultVariable"
         else:
             return "NoNSpecified"
+
+    def getMissingPercent(self, column):
+        """
+        Description
+        -------
+        find percentage of missing records in DataFrame's column
+        ...
+
+        Parameters
+        -------
+        column: string
+            name of DataFrame column
+
+        Returns
+        -------
+        missingPercentage: float64
+            Percentage of missing records
+        """
+        return self.variables[column].isna().sum() * 100 / len(self.variables)
+
+    def ksTest(self, column):
+        """
+        Description
+        -------
+        Kolmogorov-Smirnov test
+        ...
+
+        Parameters
+        -------
+        column: string
+            name of DataFrame column
+
+        Returns
+        -------
+        ksTest: [float64, float64] 
+            Kolmogorov-Smirnov test Statistic and p-value
+        """
+        return kstest(self.variables[column].dropna(), 'norm')
+
+    def MWUTest(self, column, modelType):
+        """
+        Description
+        -------
+        Mann-Whitney U test
+        ...
+
+        Parameters
+        -------
+        column: string
+            name of DataFrame column
+        modelType: string -> ['Financial', 'Custom']
+            Model type that is being generated
+
+        Returns
+        -------
+        mwUtest: [float64, float64] 
+            Mann-Whitney U test Statistic and p-value
+        """
+        IsBankrupt_Not, IsBankrupt_Yes = self.MWUTestByModelType(modelType)
+        return mannwhitneyu(
+            x=IsBankrupt_Yes[column].dropna(), y=IsBankrupt_Not[column].dropna(), alternative='two-sided')
+
+    def singleLogit(self, column, modelType):
+        """
+        Description
+        -------
+        Single factor logistic regression
+        ...
+
+        Parameters
+        -------
+        column: string
+            name of DataFrame column
+        modelType: string -> ['Financial', 'Custom']
+            Model type that is being generated
+
+        Returns
+        -------
+        constantPValue: float64
+            Single Factor logistic regression model's significance p-value for column
+        valuePValue: float64
+            Single Factor logistic regression model's significance p-value for column
+        constantStatistic: float64
+            Single Factor logistic regression model's significance statistic for column
+        valueStatistic: float64
+            Single Factor logistic regression model's significance statistic for column
+        constant: float64
+            Single Factor logistic regression model's coefficient for constant
+        value: float64
+            Single Factor logistic regression model's coefficient for column
+        """
+        if "IsBankrupt" == column:
+            return "nan", "nan", "nan", "nan", "nan", "nan"
+        dftemp = self.variables.dropna(subset=[column])
+        exog = sm.add_constant(dftemp[column])
+        endog = self.logitEndog(modelType, dftemp)
+        model = sm.Logit(endog, exog, missing='drop').fit(
+            method="bfgs", maxiter=100)
+        constantPValue = model.pvalues[0]
+        valuePValue = model.pvalues[1]
+        constantStatistic = model.tvalues[0]
+        valueStatistic = model.tvalues[1]
+        constant = model.params[0]
+        value = model.params[1]
+        return constantPValue, valuePValue, constantStatistic, valueStatistic, constant, value
+
+    def MWUTestByModelType(self, modelType):
+        """
+        Description
+        -------
+        Splits dependant DataFrame's column into splits of True and False (1,0) There is possibility to make different types of models and in this case data is splitted by different column: Financial model has dependent column IsBankrupt and for Custom the dependent column is Y
+        ...
+
+        Parameters
+        -------
+        modelType: string -> ['Financial', 'Custom']
+            Model type that is being generated
+
+        Returns
+        -------
+        IsBankrupt_Not: DataFrame
+            Data split for True dependent values
+        IsBankrupt_Yes: DataFrame
+            Data split for False dependent values
+        """
+        if modelType == "Financial":
+            IsBankrupt_Not = self.variables[self.variables['IsBankrupt'] == 0]
+            IsBankrupt_Yes = self.variables[self.variables['IsBankrupt'] == 1]
+        elif modelType == "Custom":
+            IsBankrupt_Not = self.variables[self.variables['Y'] == 0]
+            IsBankrupt_Yes = self.variables[self.variables['Y'] == 1]
+        return IsBankrupt_Not, IsBankrupt_Yes
+
+    def logitEndog(self, modelType, data):
+        """
+        Description
+        -------
+        Assigns dependent value column for use in logistic regression model. Depending of what logistic regression model is created DataFrame columns will be different.
+        ...
+
+        Parameters
+        -------
+        modelType: string -> ['Financial', 'Custom']
+            Model type that is being generated
+        data:
+            DataFrame with removed nan values from independent column
+
+        Returns
+        -------
+        endog: DataFrame
+            DataFrame with one column either IsBankrupt or Y column
+        """
+        if modelType == "Financial":
+            endog = data['IsBankrupt']
+        elif modelType == "Custom":
+            endog = data['Y']
+        return endog

@@ -23,7 +23,7 @@ class Model:
         Model parameters for model Object
     variables: Variables
         Storing of Data and specifications of the data
-    
+
     Methods
     -------
     setFile(file)
@@ -32,6 +32,8 @@ class Model:
         Set parameters for model by which the model will be generated
     read()
         read file into a DataFrame
+    analyzeVariables()
+        Used to call method from Variables class with Model Parameter modelType
     """
 
     def __init__(self):
@@ -88,3 +90,12 @@ class Model:
         except Exception as e:
             print(e)
             return 400
+
+    def analyzeVariables(self):
+        """
+        Description
+        -------
+        Used to call method from Variables class with Model Parameter modelType
+
+        """
+        self.variables.analyzeVariables(self.modelParameters.modelType)

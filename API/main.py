@@ -43,7 +43,7 @@ def Logit():
     print("Preparing Data ", datetime.now().strftime("%d/%m/%Y %H:%M:%S.%f"))
     model.variables.prepareData()
     print("Analyzing Variables ", datetime.now().strftime("%d/%m/%Y %H:%M:%S.%f"))
-    model.variables.analyzeVariables()
+    model.analyzeVariables()
 
     return model.variables.variableSpecifications.variableSpecifications
 
