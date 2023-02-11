@@ -21,6 +21,9 @@ class FileReader:
         Read a xlsx file and returns a DataFrame
     """
 
+    def __init__(self):
+        pass
+
     @classmethod
     def read(self, file):
         """

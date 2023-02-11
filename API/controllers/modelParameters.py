@@ -38,13 +38,13 @@ class ModelParameters:
     getModelType()
         Get file containing data
     """
+    
+    def __init__(self):
+        self.type = None
+        self.corrState = None
+        self.usedDataState = None
+        self.modelType = None
 
-    type = None
-    corrState = None
-    usedDataState = None
-    modelType = None
-
-    @classmethod
     def setModelParameters(self, type, corrState, usedDataState, modelType):
         """
         Description
@@ -67,7 +67,6 @@ class ModelParameters:
         self.setUsedDataState(usedDataState)
         self.setModelType(modelType)
 
-    @classmethod
     def setType(self, type):
         """
         Description
@@ -81,7 +80,6 @@ class ModelParameters:
         """
         self.type = type
 
-    @classmethod
     def setCorrState(self, corrState):
         """
         Description
@@ -95,7 +93,6 @@ class ModelParameters:
         """
         self.corrState = corrState
 
-    @classmethod
     def setUsedDataState(self, usedDataState):
         """
         Description
@@ -109,7 +106,6 @@ class ModelParameters:
         """
         self.usedDataState = usedDataState
 
-    @classmethod
     def setModelType(self, modelType):
         """
         Description
@@ -122,55 +118,3 @@ class ModelParameters:
             parameter which describes to generate a model from financial data or custom
         """
         self.modelType = modelType
-
-    @classmethod
-    def getType(self):
-        """
-        Description
-        -------
-        Get model date types parameter
-
-        Returns
-        ----------
-        parameter which describes which types of data to use when creating an model
-        """
-        return self.type
-
-    @classmethod
-    def getCorrState(self):
-        """
-        Description
-        -------
-        Get model correlation restriction parameter
-
-        Returns
-        ----------
-        parameter which describes what kind of correlation requirement to use when choosing variables to add into the model
-        """
-        return self.corrState
-
-    @classmethod
-    def getUsedDataState(self):
-        """
-        Description
-        -------
-        Get model bonus variables parameter
-
-        Returns
-        ----------
-        parameter which describes if to use bonus variables in the model: Divided and Subtracted
-        """
-        return self.usedDataState
-
-    @classmethod
-    def getModelType(self):
-        """
-        Description
-        -------
-        Get model type parameter
-
-        Returns
-        ----------
-        parameter which describes to generate a model from financial data or custom
-        """
-        return self.modelType

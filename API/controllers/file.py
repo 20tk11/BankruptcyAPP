@@ -27,10 +27,11 @@ class File:
     setFileType()
         Set File Type
     """
-    type = None
-    file = None
 
-    @classmethod
+    def __init__(self):
+        self.type = None
+        self.file = None
+
     def setFile(self, file):
         """
         Description
@@ -45,39 +46,9 @@ class File:
         self.file = file
         self.setFileType(file)
 
-        if self.getFileType() not in ["csv", "json", "xlsx"]:
-
+        if self.type not in ["csv", "json", "xlsx"]:
             return 400
 
-    @classmethod
-    def getFile(self):
-        """
-        Description
-        -------
-        Get file and it's type
-
-        Returns
-        ----------
-        file : werkzeug.datastructures.FileStorage
-            file of types: json, csv, xlsx
-        """
-        return self.file
-
-    @classmethod
-    def getFileType(self):
-        """
-        Description
-        -------
-        Get file type
-
-        Returns
-        ----------
-        type : str
-            types: json, csv, xlsx
-        """
-        return self.type
-
-    @classmethod
     def setFileType(self, file):
         """
         Description

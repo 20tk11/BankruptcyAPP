@@ -1,6 +1,8 @@
+from datetime import datetime
 import json
 from flask import Flask, Response, abort, jsonify, make_response, request, send_file
 from flask_cors import CORS
+import numpy as np
 import pandas as pd
 from controllers.errorHandler import ErrorHandler
 
@@ -23,21 +25,27 @@ def after_request(response):
 
 @app.route("/logit", methods=['POST'])
 def Logit():
-    model = Model
+    print("Model class Initiated ",
+          datetime.now().strftime("%d/%m/%Y %H:%M:%S.%f"))
+    model = Model()
+    print("File Set ", datetime.now().strftime("%d/%m/%Y %H:%M:%S.%f"))
     if (model.setFile(request.files['file']) == 400):
         return ErrorHandler.fileTypeError()
+    print("Model Parameters Set ", datetime.now().strftime("%d/%m/%Y %H:%M:%S.%f"))
     model.setModelParameters(request.form.get('type'), request.form.get('corrState'),
                              request.form.get('usedDataState'), request.form.get('modelType'))
-    print(model.modelParameters.getType())
-    print(model.modelParameters.getCorrState())
-    print(model.modelParameters.getModelType())
-    print(model.modelParameters.getUsedDataState())
+    print("Reading Data ", datetime.now().strftime("%d/%m/%Y %H:%M:%S.%f"))
     if (model.read() == 400):
-        return ErrorHandler.fileReadError(model.getFile())
-    print(model.variables.getData().columns.tolist())
-    print(model.variables.getData().dtypes['1B_1'])
-    print(model.variables.getData().dtypes['HelpIS'])
-    return "1"
+        return ErrorHandler.fileReadError(model.file)
+    print("Determining Variable Suitability ",
+          datetime.now().strftime("%d/%m/%Y %H:%M:%S.%f"))
+    model.variables.determineVariableSuitability()
+    print("Preparing Data ", datetime.now().strftime("%d/%m/%Y %H:%M:%S.%f"))
+    model.variables.prepareData()
+    print("Analyzing Variables ", datetime.now().strftime("%d/%m/%Y %H:%M:%S.%f"))
+    model.variables.analyzeVariables()
+
+    return model.variables.getVariablesSpecifications()
 
 
 @app.route("/test", methods=['POST'])

@@ -32,14 +32,11 @@ class Model:
         read file into a DataFrame
     """
 
-    file = File
-    modelParameters = ModelParameters
-    variables = Variables
-
     def __init__(self):
-        self.var = "1"
+        self.file = File()
+        self.modelParameters = ModelParameters()
+        self.variables = Variables()
 
-    @classmethod
     def setFile(self, file):
         """
         Description
@@ -53,21 +50,6 @@ class Model:
         """
         return self.file.setFile(file)
 
-    @classmethod
-    def getFile(self):
-        """
-        Description
-        -------
-        Get file containing data
-
-        Returns
-        -------
-        File
-            a file containing data used in model creation and file type
-        """
-        return self.file
-
-    @classmethod
     def setModelParameters(self, type, corrState, modelType, usedDataState):
         """
         Description
@@ -88,7 +70,6 @@ class Model:
         self.modelParameters.setModelParameters(
             type, corrState, modelType, usedDataState)
 
-    @classmethod
     def read(self):
         """
         Description
@@ -102,5 +83,6 @@ class Model:
         """
         try:
             self.variables.setData(FileReader.read(self.file))
-        except:
+        except Exception as e: 
+            print(e)
             return 400
