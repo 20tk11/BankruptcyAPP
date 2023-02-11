@@ -16,11 +16,22 @@ class Variables:
     ----------
     variables : pd.DataFrame
         DataFrame which stores data from a file
-
+    variableSpecifications: VariableSpecifications
+        Stores Specifications for data
     Methods
     -------
     setData(file)
         Set DataFrame with data from a file
+    determineVariableSuitability()
+        Assigns variables to groups which indicate variable suitability
+    getUniqueVariableCount()
+        Gets the number of unique values in DataFrame column
+    prepareData()
+        Prepares specific columns to analyze data, changes column data with substitutes
+    analyzeVariables()
+        Analyzes variables of DataFrame
+    findRatioGroup()
+        finds for which ratio group a variable belongs to
     """
 
     def __init__(self):
@@ -44,6 +55,14 @@ class Variables:
         self.variables = dataFrame
 
     def determineVariableSuitability(self):
+        """
+        Description
+        -------
+        Assigns variables to groups which indicate variable suitability
+        ...
+
+
+        """
         for i in self.variables.columns:
             if self.variables[i].dtype in ['int64', 'float64']:
                 if i not in informationalColumns:
@@ -56,9 +75,32 @@ class Variables:
                 self.variableSpecifications.addNonValidColumn(i)
 
     def getUniqueVariableCount(self, column):
+        """
+        Description
+        -------
+        Gets the number of unique values in DataFrame column
+        ...
+
+        Parameters 
+        -------
+        column: string
+            DataFrame column name
+
+        Returns
+        -------
+        count: int64
+            number of unique values in DataFrame column
+        """
         return self.variables[column].nunique()
 
     def prepareData(self):
+        """
+        Description
+        -------
+        Prepares specific columns to analyze data, changes column data with substitutes
+        ...
+
+        """
         for i in self.variableSpecifications.boolColumns:
 
             self.variables.loc[self.variables[i] == 'T', i] = 1
@@ -67,6 +109,13 @@ class Variables:
             self.variableSpecifications.addValidColumn(i)
 
     def analyzeVariables(self):
+        """
+        Description
+        -------
+        Analyzes variables of DataFrame
+        ...
+
+        """
         for i in self.variableSpecifications.validColumns:
             dataType = self.variables[i].dtype
             ratioGroup = self.findRatioGroup(i)
@@ -74,10 +123,23 @@ class Variables:
             self.variableSpecifications.addVariableSpecification(
                 specification.toJson())
 
-    def getVariablesSpecifications(self):
-        return self.variableSpecifications.variableSpecifications
-
     def findRatioGroup(self, column):
+        """
+        Description
+        -------
+        Finds for which ratio group a variable belongs to
+        ...
+
+        Parameters
+        -------
+        column: string
+            name of DataFrame column
+
+        Returns
+        -------
+        RatioGroup: str
+            Name of Ratio group for DataFrame column
+        """
         if any(i in column for i in profitabilityRatios):
             return "Profitability"
         elif any(i in column for i in liquidityRatios):

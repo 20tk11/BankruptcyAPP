@@ -13,6 +13,8 @@ class ErrorHandler:
     -------
     fileTypeError()
         Gets response for bad file type error
+    fileTypeError()
+        Gets response for file read error
     """
     def fileTypeError():
         """

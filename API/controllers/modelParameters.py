@@ -29,14 +29,6 @@ class ModelParameters:
         Get file containing data
     setModelType(modelType)
         Get file containing data
-    getType()
-        Get file containing data
-    getCorrState()
-        Set parameters for model by which the model will be generated
-    getUsedDataState()
-        Get file containing data
-    getModelType()
-        Get file containing data
     """
     
     def __init__(self):

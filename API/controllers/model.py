@@ -19,13 +19,15 @@ class Model:
     ----------
     file : File
         file of types: json, csv, xlsx
-
+    modelParameters: ModelParameters
+        Model parameters for model Object
+    variables: Variables
+        Storing of Data and specifications of the data
+    
     Methods
     -------
     setFile(file)
         Set file containing data
-    getFile()
-        Get file containing data
     setModelParameters(type, corrState, modelType, usedDataState)
         Set parameters for model by which the model will be generated
     read()
@@ -83,6 +85,6 @@ class Model:
         """
         try:
             self.variables.setData(FileReader.read(self.file))
-        except Exception as e: 
+        except Exception as e:
             print(e)
             return 400

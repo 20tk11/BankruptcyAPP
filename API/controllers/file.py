@@ -20,10 +20,6 @@ class File:
     -------
     setFile(file)
         Set file and it's type
-    getFile()
-        Get file
-    getFileType()
-        Get file Type
     setFileType()
         Set File Type
     """

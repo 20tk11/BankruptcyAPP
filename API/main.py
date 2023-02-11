@@ -45,7 +45,7 @@ def Logit():
     print("Analyzing Variables ", datetime.now().strftime("%d/%m/%Y %H:%M:%S.%f"))
     model.variables.analyzeVariables()
 
-    return model.variables.getVariablesSpecifications()
+    return model.variables.variableSpecifications.variableSpecifications
 
 
 @app.route("/test", methods=['POST'])
