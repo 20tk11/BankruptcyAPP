@@ -6,6 +6,7 @@ from scipy.stats import kstest
 from scipy.stats import mannwhitneyu
 import statsmodels.api as sm
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 
 class Variables:
@@ -74,6 +75,9 @@ class Variables:
     def __init__(self):
         self.variableSpecifications = VariablesSpecifications()
         self.variables = None
+        self.train = None
+        self.test = None
+        self.modelColumns = []
 
     def setData(self, dataFrame):
         """
@@ -159,6 +163,8 @@ class Variables:
             missingPercent = self.getMissingPercent(i)
             ksResult = self.ksTest(i)
             mw = self.MWUTest(i, modelType)
+            if mw[1] < 0.05:
+                self.addModelColumn(i)
             self.variableSpecifications.addCorrelationColumn(i, ratioGroup)
             modelConstPValue, modelValuePValue, modelConstStatistic, modelValueStatistic, constant, value = self.singleLogit(
                 i, modelType)
@@ -460,3 +466,16 @@ class Variables:
                     corr_matrix.columns[k], colCorrelation)
         if corrRestriction == 0:
             return colCorrelation
+
+    def train_testSplitByModelType(self, modelType):
+        if modelType == "Financial":
+            self.train_testSplit("IsBankrupt")
+        else:
+            self.train_testSplit("Y")
+
+    def train_testSplit(self, dependantColumn):
+        self.train, self.test = train_test_split(
+            self.variables, test_size=0.2, random_state=42, stratify=self.variables[dependantColumn])
+
+    def addModelColumn(self, column):
+        self.modelColumns.append(column)

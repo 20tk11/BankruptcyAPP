@@ -205,3 +205,5 @@ class VariablesSpecifications:
             list of variables that cannot be in a model together with key 
         """
         self.correlationRestrictions[column] = correlations
+
+    
