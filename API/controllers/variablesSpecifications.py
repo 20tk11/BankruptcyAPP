@@ -57,6 +57,7 @@ class VariablesSpecifications:
         self.variableSpecifications = []
         self.columnCorrelations = {}
         self.correlationMatrix = {}
+        self.correlationRestrictions = {}
 
     def addValidColumn(self, column):
         """
@@ -186,3 +187,21 @@ class VariablesSpecifications:
             Dictionary of single column's correlation values with other variables
         """
         self.correlationMatrix[index] = matrixJson
+
+    def addCorrelationRestriction(self, column, correlations):
+        """
+        Description
+        -------
+        Adds a correlation restriction list to dictionary by column
+
+        ...
+
+        Attributes
+        ----------
+        column: str
+            column of dataset
+
+        correlations: List<str>
+            list of variables that cannot be in a model together with key 
+        """
+        self.correlationRestrictions[column] = correlations

@@ -62,7 +62,7 @@ class Variables:
         Get endog for Logistic regression depending if it is Financial or Custom logistic model
 
     getCorrelation()
-        Iterates through Ratio groups and data groups and assigns correlation matrix for associated data and ratio group
+        Iterates through Ratio groups and data groups and assigns correlation matrix for associated data and ratio group. Determines restricted variable combinations for each ratio group by the parameters inserted
 
     getCorrelationForRatioGroup(i, j):
         Gets correlation matrix for ratio and data group combination and forms and returns a list of dictionaries that hold a column name and a list of correlations with other columns
@@ -369,15 +369,19 @@ class Variables:
         """
         Description
         -------
-        Iterates through Ratio groups and data groups and assigns correlation matrix for associated data and ratio group
+        Iterates through Ratio groups and data groups and assigns correlation matrix for associated data and ratio group. Determines restricted variable combinations for each ratio group by the parameters inserted
         ...
         """
         for i in self.variableSpecifications.columnCorrelations:
+            ratioGroupColumns = []
             for j in self.variableSpecifications.columnCorrelations[i]:
+                columns = self.variableSpecifications.columnCorrelations[i][j]
                 self.variableSpecifications.addColumnCorrelationMatrix(
-                    i+j, self.getCorrelationForRatioGroup(i, j))
+                    i+j, self.getCorrelationForRatioGroup(columns, 0))
+                ratioGroupColumns = ratioGroupColumns + columns
+            self.getCorrelationForRatioGroup(ratioGroupColumns, 1)
 
-    def getCorrelationForRatioGroup(self, i, j):
+    def getCorrelationForRatioGroup(self, column, corrRestriction):
         """
         Description
         -------
@@ -385,10 +389,11 @@ class Variables:
 
         Parameters
         -------
-        i: str
-            Ratio group
-        j: str
-            Data group
+        column: str
+            column variable
+
+        corrRestriction: int64
+            indicates if method used to find correlation restrictions or correlation matrix 
 
         Returns
         -------
@@ -396,18 +401,36 @@ class Variables:
             a list of dictionaries for each column's correlation with other columns
         ...
         """
-        correlation = pd.DataFrame()
-        column = self.variableSpecifications.columnCorrelations[i][j]
-        correlation[column] = self.variables[column]
-        correlation = correlation.dropna()
-        corr_matrix = correlation.corr()
-        return self.getColumnCorrelation(corr_matrix)
+        corr_matrix = self.getCorrelationMatrix(column)
+        return self.getColumnCorrelation(corr_matrix, corrRestriction)
 
-    def getColumnCorrelation(self, corr_matrix):
+    def getCorrelationMatrix(self, column):
         """
         Description
         -------
-        Forms and returns a list of dictionaries that hold a column name and a list of correlations with other columns
+        Gets correlation matrix DataFrame
+
+        Parameters
+        -------
+        column: str
+            column variable
+
+        Returns
+        -------
+        correlation: DataFrame
+            a DataFrame each column's correlation with other columns
+        ...
+        """
+        correlation = pd.DataFrame()
+        correlation[column] = self.variables[column]
+        correlation = correlation.dropna()
+        return correlation.corr()
+
+    def getColumnCorrelation(self, corr_matrix, corrRestriction):
+        """
+        Description
+        -------
+        Forms and returns a list of dictionaries that hold a column name and a list of correlations with other columns or forms correlations restrictions dictionary
         ...
 
         Parameters
@@ -415,13 +438,25 @@ class Variables:
         corr_matrix: DataFrame
             A DataFrame containing correlation between columns of same data group and ratio groups
 
+        corrRestriction: int64
+            indicates if method used to find correlation restrictions or correlation matrix 
+
         Returns
         -------
         correlation: Dictionary list -> [{column: column, correlations: [columnCorrelation, column_1Correlation, ..., column_nCorrelation]},...,{column_n, correlations: [columnCorrelation, column_1Correlation, ..., column_nCorrelation]}]
             a list of dictionaries for each column's correlation with other columns
         """
-        colCorrelation = []
+
         for k in range(len(corr_matrix.values)):
-            colCorrelation.append(
-                {"column": corr_matrix.columns[k], "correlations": corr_matrix.values[k].tolist()})
-        return colCorrelation
+            colCorrelation = []
+            if corrRestriction == 0:
+                colCorrelation.append(
+                    {"column": corr_matrix.columns[k], "correlations": corr_matrix.values[k].tolist()})
+            else:
+                for i in range(len(corr_matrix.values)):
+                    if abs(corr_matrix.values[k][i]) >= 0.7:
+                        colCorrelation.append(corr_matrix.columns[i])
+                self.variableSpecifications.addCorrelationRestriction(
+                    corr_matrix.columns[k], colCorrelation)
+        if corrRestriction == 0:
+            return colCorrelation
