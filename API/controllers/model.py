@@ -1,6 +1,7 @@
 from copy import deepcopy
 import pandas as pd
 from sklearn.metrics import confusion_matrix
+from variables.variables import getFinanacialRatios, economicColumns, industryBranchColumns, nonfinancialColumns
 from controllers.variables import Variables
 from controllers.fileReader import FileReader
 from controllers.modelParameters import ModelParameters
@@ -65,7 +66,7 @@ class Model:
         """
         return self.file.setFile(file)
 
-    def setModelParameters(self, type, corrState, modelType, usedDataState):
+    def setModelParameters(self, type, corrState, usedDataState, modelType):
         """
         Description
         -------
@@ -83,7 +84,7 @@ class Model:
             parameter which describes if to use bonus variables in the model: Divided and Subtracted
         """
         self.modelParameters.setModelParameters(
-            type, corrState, modelType, usedDataState)
+            type, corrState, usedDataState, modelType)
 
     def read(self):
         """
@@ -116,17 +117,24 @@ class Model:
 
     def dataPrepareModel(self, modelType):
         self.variables.train_testSplitByModelType(modelType)
+        if modelType == "Financial":
+            self.variables.modelColumns.remove("IsBankrupt")
+            self.variables.modelColumns = list(
+                set(self.getColumnsByParams()) & set(self.variables.modelColumns))
+        else:
+            self.variables.modelColumns.remove("Y")
 
     def generateModel(self):
         added_columns = []
         max_LR = 0
         counter = 0
+        print(self.variables.modelColumns)
         # while True:
-        for z in range(2):
+        for z in range(6):
             Best_column = None
             for i in self.variables.modelColumns:
                 if i not in added_columns:
-                    if len(set(added_columns).intersection(self.variables.modelColumns)) > 0:
+                    if len(set(added_columns).intersection(self.variables.variableSpecifications.correlationRestrictions[i])) < 1:
                         endog = self.getDependentVariableColumn()
                         exog = sm.add_constant(
                             self.variables.train[added_columns + [i]])
@@ -164,13 +172,19 @@ class Model:
 
     def formConfusionMatrix(self, data, added_columns):
         significantCoef = pd.DataFrame()
-        significantCoef['IsBankrupt'] = data['IsBankrupt']
+        if self.modelParameters.modelType == "Financial":
+            significantCoef['IsBankrupt'] = data['IsBankrupt']
+        else:
+            significantCoef['Y'] = data['Y']
         significantCoef[added_columns] = data[added_columns]
         result = self.Best_model.predict(significantCoef)
         result.loc[result >= 0.5] = 1
         result.loc[result < 0.5] = 0
         classification_data = pd.DataFrame()
-        classification_data['true'] = data['IsBankrupt']
+        if self.modelParameters.modelType == "Financial":
+            classification_data['true'] = data['IsBankrupt']
+        else:
+            classification_data['true'] = data['Y']
         classification_data['pred'] = result
         classification_data = classification_data.dropna()
         classification_data = classification_data.astype(int)
@@ -192,3 +206,28 @@ class Model:
             print(i)
         print("--------Column Stat--------")
         print(self.tests)
+        print("--------Best Model--------")
+        print(self.Best_model.summary())
+
+    def getColumnsByParams(self):
+        return self.getDataByUsedDataStateParameter() + self.getDataByModelColumnType()
+
+    def getDataByUsedDataStateParameter(self):
+        if self.modelParameters.usedDataState == "0":
+            return getFinanacialRatios()
+        elif self.modelParameters.usedDataState == "1":
+            return getFinanacialRatios() + ["DIV_" + x for x in getFinanacialRatios()]
+        elif self.modelParameters.usedDataState == "2":
+            return getFinanacialRatios() + ["SUB_" + x for x in getFinanacialRatios()]
+        elif self.modelParameters.usedDataState == "3":
+            return getFinanacialRatios() + ["DIV_" + x for x in getFinanacialRatios()] + ["SUB_" + x for x in getFinanacialRatios()]
+
+    def getDataByModelColumnType(self):
+        if self.modelParameters.type == "type2":
+            return economicColumns
+        elif self.modelParameters.type == "type3":
+            return economicColumns + industryBranchColumns
+        elif self.modelParameters.type == "type4":
+            return economicColumns + industryBranchColumns + nonfinancialColumns
+        else:
+            return []

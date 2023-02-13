@@ -63,7 +63,7 @@ class ModelParameters:
         """
         Description
         -------
-        Set model date types parameter
+        Set model data types parameter
 
         Parameters
         ----------
