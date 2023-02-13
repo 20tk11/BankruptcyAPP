@@ -33,7 +33,7 @@ class Model:
     read()
         read file into a DataFrame
     analyzeVariables()
-        Used to call method from Variables class with Model Parameter modelType
+        Uses to analyze variables in the dataset, get correlation matrix for all data groups and ratio groups 
     """
 
     def __init__(self):
@@ -95,7 +95,7 @@ class Model:
         """
         Description
         -------
-        Used to call method from Variables class with Model Parameter modelType
-
+        Uses to analyze variables in the dataset, get correlation matrix for all data groups and ratio groups 
         """
         self.variables.analyzeVariables(self.modelParameters.modelType)
+        self.variables.getCorrelation()

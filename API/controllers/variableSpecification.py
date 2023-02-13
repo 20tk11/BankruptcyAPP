@@ -55,11 +55,11 @@ class VariableSpecification:
         self.ratioGroup = ratioGroup
         self.missingPercent = missingPercent
         self.ksStatistic = ksStatistic
-        self.ksPValue = ksPValue
-        self.testType = self.getTestType(ksPValue)
+        self.ksPValue = float(ksPValue)
+        self.testType = self.getTestType(self.ksPValue)
         self.suitabilityStatistic = suitabilityStatistic
-        self.suitabilityPValue = suitabilityPValue
-        self.significance = self.getSignificance(suitabilityPValue)
+        self.suitabilityPValue = float(suitabilityPValue)
+        self.significance = self.getSignificance(self.suitabilityPValue)
         self.coefficientValue = float(coefficientValue)
         self.coefficientConstant = float(coefficientConstant)
         self.statisticValue = float(statisticValue)

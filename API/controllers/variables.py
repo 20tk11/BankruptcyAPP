@@ -5,6 +5,7 @@ from controllers.variablesSpecifications import VariablesSpecifications
 from scipy.stats import kstest
 from scipy.stats import mannwhitneyu
 import statsmodels.api as sm
+import pandas as pd
 
 
 class Variables:
@@ -26,28 +27,48 @@ class Variables:
     ----------
     setData(file)
         Set DataFrame with data from a file
+
     determineVariableSuitability()
         Assigns variables to groups which indicate variable suitability
+
     getUniqueVariableCount()
         Gets the number of unique values in DataFrame column
+
     prepareData()
         Prepares specific columns to analyze data, changes column data with substitutes
+
     analyzeVariables()
         Analyzes variables of DataFrame
+
     findRatioGroup()
         finds for which ratio group a variable belongs to
+
     getMissingPercent(column) 
         find percentage of missing records in DataFrame's column
+
     ksTest(column) 
         Executes Kolmogorov-Smirnov test
+
     MWUTest(column, modelType) 
         Executes Mann-Whiteney U test
+
     singleLogit(column, modelType) 
         Makes a logistic regression model for each suitable DataFrame column
+
     MWUTestByModelType(modelType) 
         splits dependant DataFrame's column into splits of True and False (1,0)
+
     logitEndog(modelType, data)
         Get endog for Logistic regression depending if it is Financial or Custom logistic model
+
+    getCorrelation()
+        Iterates through Ratio groups and data groups and assigns correlation matrix for associated data and ratio group
+
+    getCorrelationForRatioGroup(i, j):
+        Gets correlation matrix for ratio and data group combination and forms and returns a list of dictionaries that hold a column name and a list of correlations with other columns
+
+    getColumnCorrelation(corr_matrix):
+        Forms and returns a list of dictionaries that hold a column name and a list of correlations with other columns
     """
 
     def __init__(self):
@@ -138,6 +159,7 @@ class Variables:
             missingPercent = self.getMissingPercent(i)
             ksResult = self.ksTest(i)
             mw = self.MWUTest(i, modelType)
+            self.variableSpecifications.addCorrelationColumn(i, ratioGroup)
             modelConstPValue, modelValuePValue, modelConstStatistic, modelValueStatistic, constant, value = self.singleLogit(
                 i, modelType)
             specification = VariableSpecification(i, dataType, ratioGroup, missingPercent, ksResult[0], ksResult[1],
@@ -342,3 +364,64 @@ class Variables:
         elif modelType == "Custom":
             endog = data['Y']
         return endog
+
+    def getCorrelation(self):
+        """
+        Description
+        -------
+        Iterates through Ratio groups and data groups and assigns correlation matrix for associated data and ratio group
+        ...
+        """
+        for i in self.variableSpecifications.columnCorrelations:
+            for j in self.variableSpecifications.columnCorrelations[i]:
+                self.variableSpecifications.addColumnCorrelationMatrix(
+                    i+j, self.getCorrelationForRatioGroup(i, j))
+
+    def getCorrelationForRatioGroup(self, i, j):
+        """
+        Description
+        -------
+        Gets correlation matrix for ratio and data group combination and forms and returns a list of dictionaries that hold a column name and a list of correlations with other columns
+
+        Parameters
+        -------
+        i: str
+            Ratio group
+        j: str
+            Data group
+
+        Returns
+        -------
+        correlation: Dictionary list -> [{column: column, correlations: [columnCorrelation, column_1Correlation, ..., column_nCorrelation]},...,{column_n, correlations: [columnCorrelation, column_1Correlation, ..., column_nCorrelation]}]
+            a list of dictionaries for each column's correlation with other columns
+        ...
+        """
+        correlation = pd.DataFrame()
+        column = self.variableSpecifications.columnCorrelations[i][j]
+        correlation[column] = self.variables[column]
+        correlation = correlation.dropna()
+        corr_matrix = correlation.corr()
+        return self.getColumnCorrelation(corr_matrix)
+
+    def getColumnCorrelation(self, corr_matrix):
+        """
+        Description
+        -------
+        Forms and returns a list of dictionaries that hold a column name and a list of correlations with other columns
+        ...
+
+        Parameters
+        -------
+        corr_matrix: DataFrame
+            A DataFrame containing correlation between columns of same data group and ratio groups
+
+        Returns
+        -------
+        correlation: Dictionary list -> [{column: column, correlations: [columnCorrelation, column_1Correlation, ..., column_nCorrelation]},...,{column_n, correlations: [columnCorrelation, column_1Correlation, ..., column_nCorrelation]}]
+            a list of dictionaries for each column's correlation with other columns
+        """
+        colCorrelation = []
+        for k in range(len(corr_matrix.values)):
+            colCorrelation.append(
+                {"column": corr_matrix.columns[k], "correlations": corr_matrix.values[k].tolist()})
+        return colCorrelation
