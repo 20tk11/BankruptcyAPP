@@ -1,12 +1,18 @@
 from copy import deepcopy
 import pandas as pd
 from sklearn.metrics import confusion_matrix
+from controllers.logitModified import LogitModified
+from controllers.influence import Influence
 from variables.variables import getFinanacialRatios, economicColumns, industryBranchColumns, nonfinancialColumns
 from controllers.variables import Variables
 from controllers.fileReader import FileReader
 from controllers.modelParameters import ModelParameters
 from controllers.file import File
 import statsmodels.api as sm
+from statsmodels.genmod.generalized_linear_model import GLM
+from statsmodels.genmod import families
+from pprint import pprint
+from statsmodels.stats.outliers_influence import MLEInfluence
 
 
 class Model:
@@ -52,6 +58,7 @@ class Model:
         self.modelLog = pd.DataFrame(
             columns=['LLR', 'prsquared', 'aic', 'bic', 'trainPred', 'testPred'])
         self.modellist = []
+        self.globalBestLLR = 0
 
     def setFile(self, file):
         """
@@ -130,27 +137,36 @@ class Model:
         counter = 0
         print(self.variables.modelColumns)
         # while True:
-        for z in range(6):
+        while True:
             Best_column = None
             for i in self.variables.modelColumns:
                 if i not in added_columns:
-                    if len(set(added_columns).intersection(self.variables.variableSpecifications.correlationRestrictions[i])) < 1:
-                        endog = self.getDependentVariableColumn()
-                        exog = sm.add_constant(
-                            self.variables.train[added_columns + [i]])
-                        self.model = sm.Logit(endog, exog, missing='drop').fit(
-                            method="bfgs")
-                        self.tests.loc[i] = [
-                            self.model.llr, self.model.prsquared, self.model.bic, self.model.aic, self.model.pvalues[-1]]
-                        if max_LR == None:
-                            max_LR = self.model.llr
-                            Best_column = i
-                            self.Best_model = self.model
-                        elif self.model.pvalues[-1] < 0.05:
-                            if max_LR < self.model.llr:
+                    if not any(x in added_columns for x in self.variables.variableSpecifications.correlationRestrictions[i]):
+                        checkAddedColumns = added_columns + [i]
+                        checkAddedColumns.sort()
+                        tempColumnLog = deepcopy(self.columnLog)
+                        for tempcol in tempColumnLog:
+                            tempcol.sort()
+                        if checkAddedColumns not in tempColumnLog:
+                            endog = self.getDependentVariableColumn()
+                            exog = sm.add_constant(
+                                self.variables.train[added_columns + [i]])
+                            self.unfittedmodel = LogitModified(
+                                endog, exog, missing='drop')
+                            self.model = self.unfittedmodel.fit(method="bfgs")
+                            self.tests.loc[i] = [
+                                self.model.llr, self.model.prsquared, self.model.bic, self.model.aic, self.model.pvalues[-1]]
+                            if max_LR == None:
                                 max_LR = self.model.llr
                                 Best_column = i
+                                self.Best_unfittedmodel = self.unfittedmodel
                                 self.Best_model = self.model
+                            elif self.model.pvalues[-1] < 0.05:
+                                if max_LR < self.model.llr:
+                                    max_LR = self.model.llr
+                                    Best_column = i
+                                    self.Best_unfittedmodel = self.unfittedmodel
+                                    self.Best_model = self.model
             if (Best_column == None):
                 break
             added_columns.append(Best_column)
@@ -163,6 +179,54 @@ class Model:
                 self.Best_model.llr, self.Best_model.prsquared, self.Best_model.bic, self.Best_model.aic, trainRes['avgAcc'], testRes['avgAcc']]
             counter = counter + 1
             self.modellist.append(self.Best_model)
+            deleted = False
+            while True:
+                stdError = 0
+                indexToRemove = None
+                for j in range(1, len(self.Best_model.pvalues)):
+                    if (self.Best_model.pvalues[j] >= 0.05):
+                        if stdError < self.Best_model.bse[j]:
+                            stdError = self.Best_model.bse[j]
+                            indexToRemove = j
+                if indexToRemove == None:
+                    break
+                else:
+                    added_columns.remove(
+                        self.Best_model.pvalues.index[indexToRemove])
+                    endog = self.getDependentVariableColumn()
+                    exog = sm.add_constant(
+                        self.variables.train[added_columns])
+                    self.unfittedmodel = LogitModified(
+                        endog, exog, missing='drop')
+                    self.model = self.unfittedmodel.fit(method="bfgs")
+                    self.Best_model = self.model
+                    max_LR = self.model.llr
+                    self.columnLog.append(deepcopy(added_columns))
+                    trainRes = self.formConfusionMatrix(
+                        self.variables.train, added_columns)
+                    testRes = self.formConfusionMatrix(
+                        self.variables.test, added_columns)
+                    self.modelLog.loc[counter] = [
+                        self.Best_model.llr, self.Best_model.prsquared, self.Best_model.bic, self.Best_model.aic, trainRes['avgAcc'], testRes['avgAcc']]
+                    counter = counter + 1
+                    self.modellist.append(self.Best_model)
+                    indexToRemove == None
+
+            if (self.globalBestLLR < max_LR):
+                self.globalBestLLR = max_LR
+                self.globalBestModel = self.Best_model
+                self.globalBestColumns = deepcopy(added_columns)
+        self.Best_model = self.globalBestModel
+        added_columns = self.globalBestColumns
+        influence = MLEInfluence(self.Best_model)
+        print(influence.summary_frame())
+
+    def checkIfColumnCombinationsExists(self, list):
+        for i in self.columnLog:
+            if set(i) == set(list):
+                return True
+            else:
+                return False
 
     def getDependentVariableColumn(self):
         if self.modelParameters.modelType == "Financial":
@@ -205,6 +269,7 @@ class Model:
         for i in self.columnLog:
             print(i)
         print("--------Column Stat--------")
+        self.tests = self.tests.sort_values(by=['LLR'], ascending=False)
         print(self.tests)
         print("--------Best Model--------")
         print(self.Best_model.summary())
