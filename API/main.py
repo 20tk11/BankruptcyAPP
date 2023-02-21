@@ -2,10 +2,7 @@ from datetime import datetime
 import json
 from flask import Flask, Response, abort, jsonify, make_response, request, send_file
 from flask_cors import CORS
-import numpy as np
-import pandas as pd
 from controllers.errorHandler import ErrorHandler
-
 from controllers.model import Model
 
 
@@ -25,6 +22,9 @@ def after_request(response):
 
 @app.route("/logit", methods=['POST'])
 def Logit():
+    import warnings
+    warnings.filterwarnings('ignore')
+    # return "1"
     print("Model class Initiated ",
           datetime.now().strftime("%d/%m/%Y %H:%M:%S.%f"))
     model = Model()

@@ -2,7 +2,6 @@ from copy import deepcopy
 import pandas as pd
 from sklearn.metrics import confusion_matrix
 from controllers.logitModified import LogitModified
-from controllers.influence import Influence
 from variables.variables import getFinanacialRatios, economicColumns, industryBranchColumns, nonfinancialColumns
 from controllers.variables import Variables
 from controllers.fileReader import FileReader
@@ -13,6 +12,9 @@ from statsmodels.genmod.generalized_linear_model import GLM
 from statsmodels.genmod import families
 from pprint import pprint
 from statsmodels.stats.outliers_influence import MLEInfluence
+import numpy as np
+import math
+import sys
 
 
 class Model:
@@ -44,7 +46,7 @@ class Model:
     read()
         read file into a DataFrame
     analyzeVariables()
-        Uses to analyze variables in the dataset, get correlation matrix for all data groups and ratio groups 
+        Uses to analyze variables in the dataset, get correlation matrix for all data groups and ratio groups
     """
 
     def __init__(self):
@@ -114,13 +116,36 @@ class Model:
         """
         Description
         -------
-        Uses to analyze variables in the dataset, get correlation matrix for all data groups and ratio groups 
+        Uses to analyze variables in the dataset, get correlation matrix for all data groups and ratio groups
         """
         self.variables.analyzeVariables(self.modelParameters.modelType)
         self.variables.getCorrelation()
         self.dataPrepareModel(self.modelParameters.modelType)
         self.generateModel()
+        self.analuzeInfluence()
         self.printResult()
+
+    # def analuzeInfluence(self):
+    #     influence1 = self.getInfluence(
+    #         self.Best_unfittedmodel, self.Best_model)
+    #     print("------------------------------Custom---------------------------------")
+    #     f = open("isskirtysNumbersAndNames.txt", "w")
+    #     fs = open("isskirtysNumbers.txt", "w")
+    #     for i in influence1.columns:
+    #         print(influence1[i].describe())
+    #         rowInfluence = influence1.index[influence1[i] > 1].tolist()
+    #         print(len(rowInfluence))
+    #         print(rowInfluence)
+    #         rowInfluence.sort()
+    #         for j in rowInfluence:
+    #             fs.write(f"{j}")
+    #             fs.write("\n")
+    #             f.write(f"{j} {self.variables.train.iloc[[j]]}")
+    #             f.write("\n")
+
+    #     print("------------------------------Custom END---------------------------------")
+    #     f.close()
+    #     fs.close()
 
     def dataPrepareModel(self, modelType):
         self.variables.train_testSplitByModelType(modelType)
@@ -131,13 +156,19 @@ class Model:
         else:
             self.variables.modelColumns.remove("Y")
 
+    def llr(self, llnull, llf):
+        return -2*(llnull-llf)
+
+    def prsquared(self, llnull, llf):
+        return 1 - llnull-llf
+
     def generateModel(self):
         added_columns = []
         max_LR = 0
         counter = 0
         print(self.variables.modelColumns)
-        # while True:
-        while True:
+        for axas in range(100):
+
             Best_column = None
             for i in self.variables.modelColumns:
                 if i not in added_columns:
@@ -151,8 +182,8 @@ class Model:
                             endog = self.getDependentVariableColumn()
                             exog = sm.add_constant(
                                 self.variables.train[added_columns + [i]])
-                            self.unfittedmodel = LogitModified(
-                                endog, exog, missing='drop')
+                            self.unfittedmodel = sm.Logit(
+                                endog, exog, missing='drop', disp=0)
                             self.model = self.unfittedmodel.fit(method="bfgs")
                             self.tests.loc[i] = [
                                 self.model.llr, self.model.prsquared, self.model.bic, self.model.aic, self.model.pvalues[-1]]
@@ -196,10 +227,11 @@ class Model:
                     endog = self.getDependentVariableColumn()
                     exog = sm.add_constant(
                         self.variables.train[added_columns])
-                    self.unfittedmodel = LogitModified(
-                        endog, exog, missing='drop')
+                    self.unfittedmodel = sm.Logit(
+                        endog, exog, missing='drop', disp=0)
                     self.model = self.unfittedmodel.fit(method="bfgs")
                     self.Best_model = self.model
+                    self.Best_unfittedmodel = self.unfittedmodel
                     max_LR = self.model.llr
                     self.columnLog.append(deepcopy(added_columns))
                     trainRes = self.formConfusionMatrix(
@@ -215,11 +247,28 @@ class Model:
             if (self.globalBestLLR < max_LR):
                 self.globalBestLLR = max_LR
                 self.globalBestModel = self.Best_model
+                self.globalBest_unfittedmodel = self.Best_unfittedmodel
                 self.globalBestColumns = deepcopy(added_columns)
         self.Best_model = self.globalBestModel
         added_columns = self.globalBestColumns
-        influence = MLEInfluence(self.Best_model)
-        print(influence.summary_frame())
+        self.Best_unfittedmodel = self.globalBest_unfittedmodel
+        print("GETTTTTTTTTTTTTTTTING INFLUENCE")
+        print("GETTTTTTTTTTTTTTTTING INFLUENCE")
+        print("GETTTTTTTTTTTTTTTTING INFLUENCE")
+        print("GETTTTTTTTTTTTTTTTING INFLUENCE")
+        print("GETTTTTTTTTTTTTTTTING INFLUENCE")
+        removeVars = []
+        influence = self.Best_model.get_influence().summary_frame()
+        exceptCol = ['standard_resid', 'hat_diag',
+                     'dffits_internal', 'dffits', 'student_resid']
+        # print("------------------------------MLEINFLUENCE---------------------------------")
+        # for i in filter(lambda i: i not in exceptCol, influence.columns):
+        #     print(influence[i].describe())
+        #     rowInfluence = influence.index[influence[i] > 1].tolist()
+        #     print(rowInfluence)
+        #     print(len(rowInfluence))
+        #     removeVars = removeVars + rowInfluence
+        # print("------------------------------MLEINFLUENCE END---------------------------------")
 
     def checkIfColumnCombinationsExists(self, list):
         for i in self.columnLog:
@@ -296,3 +345,52 @@ class Model:
             return economicColumns + industryBranchColumns + nonfinancialColumns
         else:
             return []
+
+    def getInfluence(self, model, fittedModel):
+        rownames = self.variables.train[model.exog_names[1:]].dropna().index
+        # print(model.exog)
+        # print(model.endog)
+        # print(model.exog_names)
+        # # for i in model.exog:
+
+        dfbetasArray = []
+
+        for i in range(model.exog.shape[0]):
+            exoglist1 = model.exog[:i]
+            exoglist2 = model.exog[i+1:]
+            exoglist = np.concatenate((exoglist1, exoglist2))
+            endoglist1 = model.endog[:i]
+            endoglist2 = model.endog[i+1:]
+            endoglist = np.concatenate((endoglist1, endoglist2))
+            predictionsTrue = fittedModel.predict(exoglist)
+            residualsTrue = endoglist - predictionsTrue
+            residualsSquaredTrue = np.square(residualsTrue)
+            degrees_of_freedomTrue = fittedModel.nobs - len(fittedModel.params)
+            mseTrue = np.sum(residualsSquaredTrue)/degrees_of_freedomTrue
+            exog = sm.add_constant(exoglist)
+            mod1 = sm.Logit(endoglist, exog, missing='drop')
+            res1 = mod1.fit(disp=0, method="bfgs")
+            dfbetas = []
+            sumOfDiffrence = 0
+            for j in range(len(res1.params)):
+                numerator = fittedModel.params[j] - res1.params[j]
+                sumOfDiffrence = sumOfDiffrence + numerator
+                predictions = res1.predict(exoglist)
+                residuals = endoglist - predictions
+                residualsSquared = np.square(residuals)
+                degrees_of_freedom = res1.nobs - len(res1.params)
+                mse = np.sum(residualsSquared)/degrees_of_freedom
+
+                denumerator = math.sqrt(
+                    mse*np.diag(fittedModel.normalized_cov_params)[j])
+                # print(
+                #     f"Row {i} Column {fittedModel.params.index[j]} Dfbeta: {numerator/denumerator}")
+                dfbetas.append(numerator/denumerator)
+            CooksDenumerator = len(res1.params) * mseTrue
+            CooksDistance = sumOfDiffrence + CooksDenumerator
+            dfbetas.append(CooksDistance)
+            dfbetasArray.append(dfbetas)
+        resultDaraFrame = pd.DataFrame(
+            dfbetasArray, columns=fittedModel.params.index.to_list() + ["CooksD"], index=rownames)
+        resultDaraFrame.to_excel('export_dataframe.xlsx')
+        return resultDaraFrame
